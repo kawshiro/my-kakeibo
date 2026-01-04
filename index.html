@@ -143,9 +143,16 @@
                     </div>
                     <input type="file" id="receipt-input" accept="image/*" capture="environment" class="hidden">
                 </div>
-                <button id="ai-analyze-btn" class="w-full bg-indigo-600 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-indigo-700 active:scale-95 transition flex items-center justify-center gap-2">
-                    解析してセット <i class="fas fa-magic"></i>
-                </button>
+                
+                <!-- ボタンエリア変更: 解析のみ / 解析＆送信 -->
+                <div class="flex gap-2">
+                    <button id="ai-analyze-btn" class="flex-1 bg-indigo-600 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-indigo-700 active:scale-95 transition flex items-center justify-center gap-2">
+                        解析のみ <i class="fas fa-magic"></i>
+                    </button>
+                    <button id="ai-analyze-send-btn" class="flex-1 bg-gradient-to-r from-pink-500 to-rose-500 text-white font-bold py-4 rounded-xl shadow-lg hover:from-pink-600 hover:to-rose-600 active:scale-95 transition flex items-center justify-center gap-2">
+                        解析＆送信 <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -225,7 +232,7 @@
             </div>
             
             <button id="send-btn" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold h-14 rounded-xl shadow-lg transform active:scale-[0.98] transition flex items-center justify-center gap-3 text-xl group relative overflow-hidden">
-                <span class="relative z-10">記録する</span> <i class="fas fa-paper-plane group-hover:translate-x-1 transition-transform relative z-10"></i>
+                <span class="relative z-10">送信する</span> <i class="fas fa-paper-plane group-hover:translate-x-1 transition-transform relative z-10"></i>
             </button>
             <div class="text-center h-0 opacity-0 overflow-hidden"><a id="fallback-link" href="#" target="_blank">.</a></div>
         </section>
@@ -255,6 +262,7 @@
                 openAiBtn: document.getElementById('open-ai'),
                 closeAiBtn: document.getElementById('close-ai'),
                 analyzeBtn: document.getElementById('ai-analyze-btn'),
+                analyzeSendBtn: document.getElementById('ai-analyze-send-btn'), // 追加
                 aiInput: document.getElementById('ai-input-text'),
                 micBtn: document.getElementById('mic-btn'),
                 cameraBtn: document.getElementById('camera-btn'),
@@ -346,7 +354,7 @@
 
 
             // --- AI Logic (Multimodal) ---
-            const callGemini = async (text, imageBase64 = null, mimeType = null) => {
+            const callGemini = async (text, imageBase64 = null, mimeType = null, autoSend = false) => {
                 const apiKey = localStorage.getItem(KEYS.apiKey);
                 if (!apiKey) {
                     showToast('設定からAPIキーを入力してください', 'error');
@@ -355,8 +363,11 @@
                     return;
                 }
 
-                els.analyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 解析中...';
-                els.analyzeBtn.classList.add('ai-thinking');
+                // ボタンの状態変更
+                const targetBtn = autoSend ? els.analyzeSendBtn : els.analyzeBtn;
+                const originalText = targetBtn.innerHTML;
+                targetBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 解析中...';
+                targetBtn.classList.add('ai-thinking');
 
                 const categories = Array.from(els.radios.category).map(r => r.value).join(', ');
                 const payments = Array.from(els.radios.payment).map(r => r.value).join(', ');
@@ -425,17 +436,21 @@
                         if(r) r.checked = true;
                     }
 
-                    showToast('AI解析完了！ ✨');
+                    showToast('AI解析完了！' + (autoSend ? ' 送信します...' : ' ✨'));
                     els.aiModal.classList.add('hidden');
                     els.aiInput.value = '';
                     els.receiptInput.value = ''; // Reset file input
                     updateLink();
+
+                    if(autoSend) {
+                        setTimeout(() => els.sendBtn.click(), 500); // 少し待ってから送信
+                    }
                 } catch (e) {
                     console.error(e);
                     showToast('解析に失敗しました', 'error');
                 } finally {
-                    els.analyzeBtn.innerHTML = '解析してセット <i class="fas fa-magic"></i>';
-                    els.analyzeBtn.classList.remove('ai-thinking');
+                    targetBtn.innerHTML = originalText;
+                    targetBtn.classList.remove('ai-thinking');
                 }
             };
 
@@ -491,9 +506,15 @@
             };
             
             els.closeAiBtn.onclick = () => { els.aiModal.classList.add('hidden'); };
+            
+            // 修正: ボタンごとの処理を追加
             els.analyzeBtn.onclick = () => { 
                 if(!els.aiInput.value.trim()) return;
-                callGemini(els.aiInput.value); 
+                callGemini(els.aiInput.value, null, null, false); 
+            };
+            els.analyzeSendBtn.onclick = () => { 
+                if(!els.aiInput.value.trim()) return;
+                callGemini(els.aiInput.value, null, null, true); 
             };
 
             [els.amount, els.date, els.memo].forEach(e => e.addEventListener('input', updateLink));
