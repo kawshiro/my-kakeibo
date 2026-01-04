@@ -124,16 +124,18 @@
         </div>
     </div>
 
-    <!-- AI入力モーダル (変更なし) -->
-    <div id="ai-modal" class="fixed inset-0 bg-black/60 z-40 hidden flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[80vh]">
+    <!-- AI入力モーダル (修正: キーボード表示時に隠れないよう中央配置＆スクロール対応) -->
+    <div id="ai-modal" class="fixed inset-0 bg-black/60 z-40 hidden flex items-center justify-center p-4 backdrop-blur-sm transition-all duration-300">
+        <!-- ボトムシート型(items-end)からダイアログ型(items-center)に変更 -->
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
             <div class="p-4 bg-gradient-to-r from-indigo-600 to-purple-600 flex justify-between items-center text-white shrink-0">
                 <h2 class="font-bold flex items-center gap-2"><i class="fas fa-sparkles text-yellow-300"></i> AI入力</h2>
                 <button id="close-ai" class="text-white/80 hover:text-white"><i class="fas fa-times text-xl"></i></button>
             </div>
-            <div class="p-4 flex-1 flex flex-col gap-3">
+            <!-- overflow-y-autoを追加して中身がスクロールするように変更 -->
+            <div class="p-4 flex-1 flex flex-col gap-3 overflow-y-auto">
                 <p class="text-xs text-gray-500">例：「昨日 コンビニで1200円 飲み会代」<br>またはレシートを撮影してください</p>
-                <div class="relative">
+                <div class="relative shrink-0">
                     <textarea id="ai-input-text" class="w-full p-3 border-2 border-indigo-100 rounded-xl focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 outline-none resize-none h-32 text-lg" placeholder="ここに入力..."></textarea>
                     
                     <div class="absolute bottom-3 right-3 flex gap-2">
@@ -147,7 +149,7 @@
                     <input type="file" id="receipt-input" accept="image/*" capture="environment" class="hidden">
                 </div>
                 
-                <div class="flex gap-2">
+                <div class="flex gap-2 pb-2 shrink-0">
                     <button id="ai-analyze-btn" class="flex-1 bg-indigo-600 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-indigo-700 active:scale-95 transition flex items-center justify-center gap-2">
                         解析のみ <i class="fas fa-magic"></i>
                     </button>
@@ -290,7 +292,7 @@
                 const recognition = new SpeechRecognition();
                 recognition.lang = 'ja-JP';
                 recognition.interimResults = false;
-                recognition.continuous = false;
+                recognition.continuous = true; // 修正: 連続入力をONにして、勝手に止まらないようにした
 
                 els.micBtn.onclick = () => {
                     if (els.micBtn.classList.contains('mic-listening')) {
@@ -309,7 +311,10 @@
                 };
 
                 recognition.onresult = (event) => {
-                    const transcript = event.results[0][0].transcript;
+                    // 修正: 連続入力に対応するため、最新の結果(配列の最後)を取得するように変更
+                    const lastIndex = event.results.length - 1;
+                    const transcript = event.results[lastIndex][0].transcript;
+                    
                     const current = els.aiInput.value;
                     els.aiInput.value = current ? `${current} ${transcript}` : transcript;
                     els.aiInput.scrollTop = els.aiInput.scrollHeight;
@@ -321,7 +326,8 @@
                     let msg = '音声認識エラー';
                     
                     if (event.error === 'no-speech') {
-                        msg = '音声が検出されませんでした';
+                        // no-speechの場合は無視して再開させても良いが、今回は通知だけ抑制するかメッセージを控えめに
+                        msg = '音声が検出されませんでした'; 
                     } else if (event.error === 'audio-capture') {
                         msg = 'マイクが見つかりません';
                     } else if (event.error === 'not-allowed') {
@@ -331,7 +337,10 @@
                     }
                     
                     console.error('Speech recognition error:', event.error);
-                    showToast(msg, 'error');
+                    // no-speech以外のみトースト表示（連続入力時に無言で切れるとウザいので）
+                    if (event.error !== 'no-speech') {
+                        showToast(msg, 'error');
+                    }
                 };
             } else {
                 els.micBtn.style.display = 'none';
@@ -523,6 +532,14 @@
             [...els.radios.category, ...els.radios.payment].forEach(e => e.addEventListener('change', updateLink));
 
             els.memo.addEventListener('keydown', e => { if(e.key==='Enter'){ e.preventDefault(); els.sendBtn.click(); }});
+            
+            // ここに追加: AI入力欄でEnterを押したときの挙動
+            els.aiInput.addEventListener('keydown', e => { 
+                if(e.key==='Enter'){ 
+                    e.preventDefault(); 
+                    els.analyzeBtn.click(); 
+                }
+            });
 
             els.sendBtn.onclick = () => {
                 if(!els.amount.value) { showToast('金額を入力', 'error'); els.amount.focus(); return; }
