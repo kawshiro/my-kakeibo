@@ -7,10 +7,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     
-    <!-- エラー検出用スクリプト -->
     <script>
         window.onerror = function(message, source, lineno, colno, error) {
-            // alert('エラーが発生しました:\n' + message); // 安定したらコメントアウトしてもOK
+            // alert('エラー: ' + message); // 必要に応じてコメントアウト解除
         };
     </script>
 
@@ -74,7 +73,6 @@
 </head>
 <body class="bg-gray-100 h-screen overflow-hidden text-gray-800 flex flex-col">
 
-    <!-- 設定モーダル -->
     <div id="settings-modal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div class="p-4 border-b flex justify-between items-center">
@@ -101,7 +99,6 @@
         </div>
     </div>
 
-    <!-- AIモーダル -->
     <div id="ai-modal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg flex flex-col max-h-[85vh]">
             <div class="p-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white flex justify-between items-center shrink-0 rounded-t-2xl">
@@ -136,21 +133,17 @@
         </div>
     </div>
 
-    <!-- 通知エリア -->
     <div id="toast-container"></div>
 
-    <!-- ヘッダー -->
     <div class="bg-gradient-to-r from-indigo-600 to-blue-600 p-2 text-white shadow-md z-30 shrink-0">
         <div class="flex justify-between items-center mb-1 gap-2">
             <input type="date" id="input-date" class="bg-white/20 text-white font-bold text-sm rounded px-2 py-1 border-none outline-none w-32 h-10">
             
             <div class="flex gap-2 items-center flex-1 justify-end">
-                <!-- AIボタン: 大型化＆強調 -->
                 <button id="open-ai" class="bg-gradient-to-br from-fuchsia-500 to-violet-600 text-white h-10 px-5 rounded-full shadow-lg border border-white/30 flex items-center gap-2 active:scale-95 transition transform hover:scale-105">
                     <i class="fas fa-sparkles text-lg animate-pulse text-yellow-300"></i> <span class="font-bold text-base tracking-wide">AI入力</span>
                 </button>
                 
-                <!-- 設定ボタン -->
                 <button id="open-settings" class="w-10 h-10 flex items-center justify-center opacity-80 hover:opacity-100">
                     <i class="fas fa-cog text-xl"></i>
                 </button>
@@ -163,25 +156,35 @@
         </div>
     </div>
 
-    <!-- メインエリア -->
     <div class="flex-1 p-2 flex flex-col gap-2 overflow-y-auto">
-        <!-- 費目 -->
         <div>
             <div class="text-[10px] font-bold text-gray-500 mb-1 ml-1">カテゴリー</div>
             <div class="compact-grid" id="category-container">
-                <!-- JSで生成 -->
+                <label class="cursor-pointer relative group"><input type="radio" name="category" value="食費" class="category-radio sr-only" checked><div class="compact-item bg-white border-gray-300"><i class="fas fa-utensils text-orange-500"></i><span>食費</span></div></label>
+                <label class="cursor-pointer relative group"><input type="radio" name="category" value="日用品" class="category-radio sr-only"><div class="compact-item bg-white border-gray-300"><i class="fas fa-shopping-basket text-green-500"></i><span>日用品</span></div></label>
+                <label class="cursor-pointer relative group"><input type="radio" name="category" value="衣服・美容費" class="category-radio sr-only"><div class="compact-item bg-white border-gray-300"><i class="fas fa-tshirt text-pink-500"></i><span>衣服<br>美容</span></div></label>
+                <label class="cursor-pointer relative group"><input type="radio" name="category" value="娯楽・交際費" class="category-radio sr-only"><div class="compact-item bg-white border-gray-300"><i class="fas fa-glass-cheers text-purple-500"></i><span>娯楽<br>交際</span></div></label>
+                <label class="cursor-pointer relative group"><input type="radio" name="category" value="交通費" class="category-radio sr-only"><div class="compact-item bg-white border-gray-300"><i class="fas fa-train text-blue-500"></i><span>交通費</span></div></label>
+                <label class="cursor-pointer relative group"><input type="radio" name="category" value="通信費" class="category-radio sr-only"><div class="compact-item bg-white border-gray-300"><i class="fas fa-wifi text-cyan-500"></i><span>通信費</span></div></label>
+                <label class="cursor-pointer relative group"><input type="radio" name="category" value="医療費" class="category-radio sr-only"><div class="compact-item bg-white border-gray-300"><i class="fas fa-clinic-medical text-red-500"></i><span>医療費</span></div></label>
+                <label class="cursor-pointer relative group"><input type="radio" name="category" value="その他" class="category-radio sr-only"><div class="compact-item bg-white border-gray-300"><i class="fas fa-ellipsis-h text-gray-500"></i><span>その他</span></div></label>
             </div>
         </div>
 
-        <!-- 支払 -->
         <div>
             <div class="text-[10px] font-bold text-gray-500 mb-1 ml-1">支払い方法</div>
             <div class="compact-grid" id="payment-container">
-                <!-- JSで生成 -->
+                <label class="cursor-pointer relative group"><input type="radio" name="payment" value="現金" class="payment-radio sr-only" checked><div class="compact-item bg-white border-gray-300"><i class="fas fa-coins text-gray-600"></i><span>現金</span></div></label>
+                <label class="cursor-pointer relative group"><input type="radio" name="payment" value="paypay" class="payment-radio sr-only"><div class="compact-item bg-white border-gray-300"><span class="text-lg font-bold text-red-600">P</span><span>paypay</span></div></label>
+                <label class="cursor-pointer relative group"><input type="radio" name="payment" value="モバイルSuica" class="payment-radio sr-only"><div class="compact-item bg-white border-gray-300"><i class="fas fa-mobile-alt text-green-600"></i><span>Suica</span></div></label>
+                <label class="cursor-pointer relative group"><input type="radio" name="payment" value="olive" class="payment-radio sr-only"><div class="compact-item bg-white border-gray-300"><i class="fas fa-leaf text-lime-600"></i><span>olive</span></div></label>
+                <label class="cursor-pointer relative group"><input type="radio" name="payment" value="三井住友ゴールドカード" class="payment-radio sr-only"><div class="compact-item bg-white border-gray-300"><i class="fas fa-credit-card text-yellow-600"></i><span>住友Gold</span></div></label>
+                <label class="cursor-pointer relative group"><input type="radio" name="payment" value="楽天カード" class="payment-radio sr-only"><div class="compact-item bg-white border-gray-300"><i class="fas fa-credit-card text-pink-600"></i><span>楽天</span></div></label>
+                <label class="cursor-pointer relative group"><input type="radio" name="payment" value="viewカード" class="payment-radio sr-only"><div class="compact-item bg-white border-gray-300"><i class="fas fa-subway text-blue-600"></i><span>View</span></div></label>
+                <label class="cursor-pointer relative group"><input type="radio" name="payment" value="その他" class="payment-radio sr-only"><div class="compact-item bg-white border-gray-300"><i class="fas fa-ellipsis-h text-gray-400"></i><span>その他</span></div></label>
             </div>
         </div>
 
-        <!-- メモ・送信 -->
         <div class="mt-auto pt-2 flex flex-col gap-2">
             <div class="relative">
                 <i class="fas fa-pen absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
@@ -200,69 +203,24 @@
         const CONFIG = {
             baseUrl: 'https://docs.google.com/forms/d/e/1FAIpQLSdyfO5WEIVhLXzE9o7R29heMt6w5Pvf-iEgfZFPztJChzzO_Q/viewform?usp=header', 
             ids: {
-                amount: 'entry.319120210',
-                date: 'entry.217676147',
-                category: 'entry.1341647002',
-                payment: 'entry.594957767',
-                memo: 'entry.1139655263'
+                amount: 'entry.319120210', date: 'entry.217676147', category: 'entry.1341647002', payment: 'entry.594957767', memo: 'entry.1139655263'      
             },
             storageKey: 'budget_2026_data'
         };
+        const PREFIX = 'budget_2026_';
+        const KEYS = { base: PREFIX+'baseUrl', amount: PREFIX+'entryAmount', payment: PREFIX+'entryPayment', date: PREFIX+'entryDate', category: PREFIX+'entryCategory', memo: PREFIX+'entryMemo', apiKey: PREFIX+'apiKey' };
 
-        const CATEGORIES = [
-            {val:'食費', icon:'fa-utensils', color:'text-orange-500'},
-            {val:'日用品', icon:'fa-shopping-basket', color:'text-green-500'},
-            {val:'衣服・美容費', icon:'fa-tshirt', color:'text-pink-500'},
-            {val:'娯楽・交際費', icon:'fa-glass-cheers', color:'text-purple-500'},
-            {val:'交通費', icon:'fa-train', color:'text-blue-500'},
-            {val:'通信費', icon:'fa-wifi', color:'text-cyan-500'},
-            {val:'医療費', icon:'fa-clinic-medical', color:'text-red-500'},
-            {val:'その他', icon:'fa-ellipsis-h', color:'text-gray-500'}
-        ];
-
-        const PAYMENTS = [
-            {val:'現金', icon:'fa-coins', color:'text-gray-600'},
-            {val:'paypay', label:'P', color:'text-red-600', isText:true},
-            {val:'モバイルSuica', icon:'fa-mobile-alt', color:'text-green-600'},
-            {val:'olive', icon:'fa-leaf', color:'text-lime-600'},
-            {val:'三井住友ゴールドカード', icon:'fa-credit-card', color:'text-yellow-600', label:'住友Gold'},
-            {val:'楽天カード', icon:'fa-credit-card', color:'text-pink-600', label:'楽天'},
-            {val:'viewカード', icon:'fa-subway', color:'text-blue-600', label:'View'},
-            {val:'その他', icon:'fa-ellipsis-h', color:'text-gray-400'}
-        ];
-
-        // UI構築関数
-        function renderRadios() {
-            const catContainer = document.getElementById('category-container');
-            const payContainer = document.getElementById('payment-container');
-
-            // カテゴリ生成
-            catContainer.innerHTML = CATEGORIES.map((c, i) => `
-                <label class="cursor-pointer relative group">
-                    <input type="radio" name="category" value="${c.val}" class="category-radio sr-only" ${i===0?'checked':''}>
-                    <div class="compact-item">
-                        <i class="fas ${c.icon} ${c.color}"></i>
-                        <span>${c.val.replace('・','<br>').substring(0,4)}</span>
-                    </div>
-                </label>
-            `).join('');
-
-            // 支払い生成
-            payContainer.innerHTML = PAYMENTS.map((p, i) => `
-                <label class="cursor-pointer relative group">
-                    <input type="radio" name="payment" value="${p.val}" class="payment-radio sr-only" ${i===0?'checked':''}>
-                    <div class="compact-item">
-                        ${p.isText ? `<span class="text-lg font-bold ${p.color}">${p.label}</span>` : `<i class="fas ${p.icon} ${p.color}"></i>`}
-                        <span>${p.label || p.val}</span>
-                    </div>
-                </label>
-            `).join('');
-        }
+        const showToast = (msg, type='success') => {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `saved-toast ${type==='success'?'bg-slate-800':'bg-red-600'} text-white px-4 py-2 rounded-full shadow-lg text-xs font-bold flex items-center gap-2`;
+            toast.innerHTML = `<i class="fas ${type==='success'?'fa-check':'fa-exclamation'}"></i> ${msg}`;
+            container.appendChild(toast); 
+            setTimeout(() => toast.remove(), 2000);
+        };
 
         // DOM読み込み完了時の処理
         document.addEventListener('DOMContentLoaded', function() {
-            renderRadios(); // ボタン生成
-
             // 要素取得
             const els = {
                 modal: document.getElementById('settings-modal'),
@@ -307,7 +265,7 @@
             els.sDate.value = savedConfig.date || CONFIG.ids.date;
             els.sMemo.value = savedConfig.memo || CONFIG.ids.memo;
 
-            // 設定保存関数
+            // 設定保存
             const saveSettings = () => {
                 const data = {
                     baseUrl: els.sBaseUrl.value,
@@ -320,71 +278,19 @@
                 };
                 localStorage.setItem(CONFIG.storageKey, JSON.stringify(data));
             };
+            [els.sApiKey, els.sAmt, els.sCat, els.sPay, els.sDate, els.sMemo].forEach(el => el.addEventListener('input', saveSettings));
 
-            // イベントリスナー設定 (設定画面)
-            [els.sApiKey, els.sAmt, els.sCat, els.sPay, els.sDate, els.sMemo].forEach(el => {
-                el.addEventListener('input', saveSettings);
-            });
-
-            // モーダル開閉
+            // モーダル
             els.openBtn.onclick = () => els.modal.classList.remove('hidden');
             els.closeBtn.onclick = () => els.modal.classList.add('hidden');
             els.openAiBtn.onclick = () => els.aiModal.classList.remove('hidden');
             els.closeAiBtn.onclick = () => els.aiModal.classList.add('hidden');
 
-            // 送信処理 (最重要)
+            // 送信処理
             els.sendBtn.onclick = function() {
-                if(!els.amount.value) {
-                    alert('金額を入力してください');
-                    els.amount.focus();
-                    return;
-                }
+                if(!els.amount.value) { alert('金額を入力してください'); els.amount.focus(); return; }
 
-                // 現在の設定値を取得
                 const cfg = JSON.parse(localStorage.getItem(CONFIG.storageKey) || '{}');
                 const baseUrl = cfg.baseUrl || CONFIG.baseUrl;
                 const ids = {
-                    amount: cfg.amount || CONFIG.ids.amount,
-                    category: cfg.category || CONFIG.ids.category,
-                    payment: cfg.payment || CONFIG.ids.payment,
-                    date: cfg.date || CONFIG.ids.date,
-                    memo: cfg.memo || CONFIG.ids.memo
-                };
-
-                // 値を取得
-                const catVal = document.querySelector('input[name="category"]:checked')?.value || '';
-                const payVal = document.querySelector('input[name="payment"]:checked')?.value || '';
-
-                // URL生成
-                const p = new URLSearchParams();
-                p.append(ids.amount, els.amount.value);
-                p.append(ids.category, catVal);
-                p.append(ids.payment, payVal);
-                p.append(ids.date, els.date.value);
-                if(els.memo.value) p.append(ids.memo, els.memo.value);
-
-                const finalUrl = `${baseUrl}${baseUrl.includes('?')?'&':'?'}${p.toString()}`;
-
-                // 強制遷移 (隠しリンククリック)
-                els.hiddenLink.href = finalUrl;
-                els.hiddenLink.click();
-                
-                showToast('送信画面へ移動します...');
-            };
-
-            // AI機能
-            const callGemini = async (text, imageBase64, mimeType, autoSend) => {
-                const apiKey = els.sApiKey.value;
-                if(!apiKey) { alert('設定からGemini APIキーを入力してください'); return; }
-
-                const btn = autoSend ? els.analyzeSendBtn : els.analyzeBtn;
-                const originalText = btn.innerText;
-                btn.innerText = '解析中...';
-                btn.classList.add('ai-thinking');
-
-                const prompt = `
-                    You are a budget assistant. Today is ${els.date.value}.
-                    Extract: amount(int), category(string), payment(string), date(YYYY-MM-DD), memo(string).
-                    Categories: ${CATEGORIES.map(c=>c.val).join(',')}.
-                    Payments: ${PAYMENTS.map(p=>p.val).join(',')}.
-      
+                    amount: cfg.amount || CONFIG.id
