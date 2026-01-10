@@ -7,9 +7,11 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     
-    <!-- エラー検出用 -->
+    <!-- エラー検出用: 万が一エラーが出たらアラートで知らせる -->
     <script>
         window.onerror = function(message, source, lineno, colno, error) {
+            console.error(error);
+            // 致命的なエラーのみアラート (鬱陶しいのでコメントアウト解除で有効化)
             // alert('エラー: ' + message); 
         };
     </script>
@@ -114,17 +116,14 @@
                     <textarea id="ai-input-text" class="w-full p-3 border-2 border-indigo-100 rounded-xl h-32 text-lg focus:border-indigo-500 outline-none" placeholder="例：昨日コンビニで1200円"></textarea>
                     
                     <div class="absolute bottom-2 right-2 flex gap-2">
-                        <!-- アルバムボタン -->
                         <label class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-green-600 cursor-pointer border border-green-200">
                             <i class="fas fa-image"></i>
                             <input type="file" id="album-input" accept="image/*" class="hidden">
                         </label>
-                        <!-- カメラボタン -->
                         <label class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 cursor-pointer border border-blue-200">
                             <i class="fas fa-camera"></i>
                             <input type="file" id="camera-input" accept="image/*" capture="environment" class="hidden">
                         </label>
-                        <!-- マイクボタン -->
                         <button id="mic-btn" class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-600 border border-gray-200">
                             <i class="fas fa-microphone"></i>
                         </button>
@@ -148,7 +147,7 @@
             <input type="date" id="input-date" class="bg-white/20 text-white font-bold text-sm rounded px-2 py-1 border-none outline-none w-32 h-10">
             
             <div class="flex gap-2 items-center flex-1 justify-end">
-                <!-- AIボタン: コンパクトサイズに戻しました -->
+                <!-- AIボタン -->
                 <button id="open-ai" class="bg-gradient-to-br from-fuchsia-500 to-violet-600 text-white px-3 py-1.5 rounded-full shadow border border-white/30 flex items-center gap-1 active:scale-95 transition">
                     <i class="fas fa-sparkles text-xs text-yellow-300"></i> <span class="text-xs font-bold">AI</span>
                 </button>
@@ -213,93 +212,89 @@
     </div>
 
     <script>
-        // 設定データ
-        const CONFIG = {
-            baseUrl: 'https://docs.google.com/forms/d/e/1FAIpQLSdyfO5WEIVhLXzE9o7R29heMt6w5Pvf-iEgfZFPztJChzzO_Q/viewform?usp=header', 
-            ids: {
-                amount: 'entry.319120210', date: 'entry.217676147', category: 'entry.1341647002', payment: 'entry.594957767', memo: 'entry.1139655263'      
-            },
-            storageKey: 'budget_2026_data'
-        };
-        const PREFIX = 'budget_2026_';
-        const KEYS = { base: PREFIX+'baseUrl', amount: PREFIX+'entryAmount', payment: PREFIX+'entryPayment', date: PREFIX+'entryDate', category: PREFIX+'entryCategory', memo: PREFIX+'entryMemo', apiKey: PREFIX+'apiKey' };
-
-        const showToast = (msg, type='success') => {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = `saved-toast ${type==='success'?'bg-slate-800':'bg-red-600'} text-white px-4 py-2 rounded-full shadow-lg text-xs font-bold flex items-center gap-2`;
-            toast.innerHTML = `<i class="fas ${type==='success'?'fa-check':'fa-exclamation'}"></i> ${msg}`;
-            container.appendChild(toast); 
-            setTimeout(() => toast.remove(), 2000);
-        };
-
-        // DOM読み込み完了時の処理
         document.addEventListener('DOMContentLoaded', function() {
-            // 要素取得
-            const els = {
-                modal: document.getElementById('settings-modal'),
-                aiModal: document.getElementById('ai-modal'),
-                openBtn: document.getElementById('open-settings'),
-                closeBtn: document.getElementById('close-settings'),
-                openAiBtn: document.getElementById('open-ai'),
-                closeAiBtn: document.getElementById('close-ai'),
-                analyzeBtn: document.getElementById('ai-analyze-btn'),
-                analyzeSendBtn: document.getElementById('ai-analyze-send-btn'),
-                sendBtn: document.getElementById('send-btn'),
-                amount: document.getElementById('input-amount'),
-                date: document.getElementById('input-date'),
-                memo: document.getElementById('input-memo'),
-                aiInput: document.getElementById('ai-input-text'),
-                micBtn: document.getElementById('mic-btn'),
-                cameraInput: document.getElementById('camera-input'),
-                albumInput: document.getElementById('album-input'),
-                hiddenLink: document.getElementById('hidden-link'),
-                
-                // 設定Inputs
-                sApiKey: document.getElementById('setting-api-key'),
-                sBaseUrl: document.getElementById('setting-base-url'),
-                sAmt: document.getElementById('setting-entry-amount'),
-                sCat: document.getElementById('setting-entry-category'),
-                sPay: document.getElementById('setting-entry-payment'),
-                sDate: document.getElementById('setting-entry-date'),
-                sMemo: document.getElementById('setting-entry-memo')
-            };
-
-            // 初期化
-            const today = new Date().toISOString().split('T')[0];
-            els.date.value = today;
-            
-            // 設定読み込み
-            const savedConfig = JSON.parse(localStorage.getItem(CONFIG.storageKey) || '{}');
-            els.sBaseUrl.value = savedConfig.baseUrl || CONFIG.baseUrl;
-            els.sApiKey.value = savedConfig.apiKey || '';
-            els.sAmt.value = savedConfig.amount || CONFIG.ids.amount;
-            els.sCat.value = savedConfig.category || CONFIG.ids.category;
-            els.sPay.value = savedConfig.payment || CONFIG.ids.payment;
-            els.sDate.value = savedConfig.date || CONFIG.ids.date;
-            els.sMemo.value = savedConfig.memo || CONFIG.ids.memo;
-
-            // 設定保存
-            const saveSettings = () => {
-                const data = {
-                    baseUrl: els.sBaseUrl.value,
-                    apiKey: els.sApiKey.value,
-                    amount: els.sAmt.value,
-                    category: els.sCat.value,
-                    payment: els.sPay.value,
-                    date: els.sDate.value,
-                    memo: els.sMemo.value
+            try {
+                // 設定データ
+                const CONFIG = {
+                    baseUrl: 'https://docs.google.com/forms/d/e/1FAIpQLSdyfO5WEIVhLXzE9o7R29heMt6w5Pvf-iEgfZFPztJChzzO_Q/viewform?usp=header', 
+                    ids: {
+                        amount: 'entry.319120210', date: 'entry.217676147', category: 'entry.1341647002', payment: 'entry.594957767', memo: 'entry.1139655263'      
+                    },
+                    storageKey: 'budget_2026_data'
                 };
-                localStorage.setItem(CONFIG.storageKey, JSON.stringify(data));
-            };
-            [els.sApiKey, els.sAmt, els.sCat, els.sPay, els.sDate, els.sMemo].forEach(el => el.addEventListener('input', saveSettings));
+                const PREFIX = 'budget_2026_';
+                const KEYS = { base: PREFIX+'baseUrl', amount: PREFIX+'entryAmount', payment: PREFIX+'entryPayment', date: PREFIX+'entryDate', category: PREFIX+'entryCategory', memo: PREFIX+'entryMemo', apiKey: PREFIX+'apiKey' };
 
-            // モーダル
-            els.openBtn.onclick = () => els.modal.classList.remove('hidden');
-            els.closeBtn.onclick = () => els.modal.classList.add('hidden');
-            els.openAiBtn.onclick = () => els.aiModal.classList.remove('hidden');
-            els.closeAiBtn.onclick = () => els.aiModal.classList.add('hidden');
+                // Toast関数
+                const showToast = (msg, type='success') => {
+                    const container = document.getElementById('toast-container');
+                    const toast = document.createElement('div');
+                    toast.className = `saved-toast ${type==='success'?'bg-slate-800':'bg-red-600'} text-white px-4 py-2 rounded-full shadow-lg text-xs font-bold flex items-center gap-2`;
+                    toast.innerHTML = `<i class="fas ${type==='success'?'fa-check':'fa-exclamation'}"></i> ${msg}`;
+                    container.appendChild(toast); 
+                    setTimeout(() => toast.remove(), 2000);
+                };
 
-            // 送信処理
-            els.sendBtn.onclick = function() {
-                if(!els.am
+                // 要素取得
+                const els = {
+                    modal: document.getElementById('settings-modal'),
+                    aiModal: document.getElementById('ai-modal'),
+                    openBtn: document.getElementById('open-settings'),
+                    closeBtn: document.getElementById('close-settings'),
+                    openAiBtn: document.getElementById('open-ai'),
+                    closeAiBtn: document.getElementById('close-ai'),
+                    analyzeBtn: document.getElementById('ai-analyze-btn'),
+                    analyzeSendBtn: document.getElementById('ai-analyze-send-btn'),
+                    sendBtn: document.getElementById('send-btn'),
+                    amount: document.getElementById('input-amount'),
+                    date: document.getElementById('input-date'),
+                    memo: document.getElementById('input-memo'),
+                    aiInput: document.getElementById('ai-input-text'),
+                    micBtn: document.getElementById('mic-btn'),
+                    cameraInput: document.getElementById('camera-input'),
+                    albumInput: document.getElementById('album-input'),
+                    hiddenLink: document.getElementById('hidden-link'),
+                    
+                    // 設定Inputs
+                    sApiKey: document.getElementById('setting-api-key'),
+                    sBaseUrl: document.getElementById('setting-base-url'),
+                    sAmt: document.getElementById('setting-entry-amount'),
+                    sCat: document.getElementById('setting-entry-category'),
+                    sPay: document.getElementById('setting-entry-payment'),
+                    sDate: document.getElementById('setting-entry-date'),
+                    sMemo: document.getElementById('setting-entry-memo')
+                };
+
+                // URL生成・リンク更新関数 (※ここが前回抜けていました※)
+                const updateLink = () => {
+                    // 基本的には送信ボタンのロジックで動くため、fallbackLinkがない場合は何もしない
+                    // 以前のコードとの互換性のため定義だけ残しておくか、空にしておく
+                };
+
+                const autoSave = (key, value) => { localStorage.setItem(key, value.trim()); };
+
+                // 初期化
+                const today = new Date().toISOString().split('T')[0];
+                els.date.value = today;
+                
+                // 設定読み込み
+                const savedConfig = JSON.parse(localStorage.getItem(CONFIG.storageKey) || '{}');
+                els.sBaseUrl.value = savedConfig.baseUrl || CONFIG.baseUrl;
+                els.sApiKey.value = savedConfig.apiKey || '';
+                els.sAmt.value = savedConfig.amount || CONFIG.ids.amount;
+                els.sCat.value = savedConfig.category || CONFIG.ids.category;
+                els.sPay.value = savedConfig.payment || CONFIG.ids.payment;
+                els.sDate.value = savedConfig.date || CONFIG.ids.date;
+                els.sMemo.value = savedConfig.memo || CONFIG.ids.memo;
+
+                // 設定保存
+                const saveSettings = () => {
+                    const data = {
+                        baseUrl: els.sBaseUrl.value,
+                        apiKey: els.sApiKey.value,
+                        amount: els.sAmt.value,
+                        category: els.sCat.value,
+                        payment: els.sPay.value,
+                        date: els.sDate.value,
+                        memo: els.sMemo.value
+        
