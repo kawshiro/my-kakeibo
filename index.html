@@ -152,7 +152,6 @@
                 <input type="date" id="input-date" class="bg-transparent text-white font-bold text-sm focus:outline-none cursor-pointer w-28 h-7">
             </div>
             <div class="flex gap-3 items-center">
-                <!-- AIボタン: z-50で最前面に配置 -->
                 <button id="open-ai" type="button" class="h-9 px-4 rounded-full bg-gradient-to-br from-fuchsia-500 to-violet-600 hover:from-fuchsia-400 hover:to-violet-500 flex items-center justify-center text-white transition-all shadow-[0_0_10px_rgba(192,38,211,0.5)] border border-white/30 active:scale-95 hover:scale-105 group gap-2 z-50 cursor-pointer">
                     <svg class="w-4 h-4 drop-shadow-sm group-hover:rotate-180 transition-transform duration-700 ease-in-out" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                         <path d="M12 2C12 7.52285 16.4772 12 22 12C16.4772 12 12 16.4772 12 22C12 16.4772 7.52285 12 2 12C7.52285 12 12 7.52285 12 2Z" />
@@ -214,6 +213,9 @@
                     enterkeyhint="go">
             </div>
             
+            <!-- 送信用の隠しリンク (互換性のため) -->
+            <a id="hidden-link" href="#" target="_blank" rel="noopener noreferrer" style="display:none;"></a>
+
             <button id="send-btn" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold h-16 rounded-xl shadow-lg transform active:scale-[0.98] transition flex items-center justify-center gap-3 text-2xl group relative overflow-hidden">
                 <span class="relative z-10">送信する</span> <i class="fas fa-paper-plane group-hover:translate-x-1 transition-transform relative z-10"></i>
             </button>
@@ -223,30 +225,30 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // --- 1. 関数定義 ---
+            // ============================================
+            // 1. 変数・設定の初期化 (最優先で実行)
+            // ============================================
             const DEFAULTS = {
                 baseUrl: 'https://docs.google.com/forms/d/e/1FAIpQLSdyfO5WEIVhLXzE9o7R29heMt6w5Pvf-iEgfZFPztJChzzO_Q/viewform?usp=header', 
-                amountId: 'entry.319120210', dateId: 'entry.217676147', categoryId: 'entry.1341647002', paymentId: 'entry.594957767', memoId: 'entry.1139655263'      
+                amountId: 'entry.319120210',    
+                dateId: 'entry.217676147',      
+                categoryId: 'entry.1341647002', 
+                paymentId: 'entry.594957767',   
+                memoId: 'entry.1139655263'      
             };
             const PREFIX = 'budget_2026_';
             const KEYS = { base: PREFIX+'baseUrl', amount: PREFIX+'entryAmount', payment: PREFIX+'entryPayment', date: PREFIX+'entryDate', category: PREFIX+'entryCategory', memo: PREFIX+'entryMemo', apiKey: PREFIX+'apiKey' };
 
-            const showToast = (msg, type='success') => {
-                const container = document.getElementById('toast-container');
-                const toast = document.createElement('div');
-                toast.className = `saved-toast ${type==='success'?'bg-slate-800':'bg-red-600'} text-white px-4 py-2 rounded-full shadow-lg text-xs font-bold flex items-center gap-2`;
-                toast.innerHTML = `<i class="fas ${type==='success'?'fa-check':'fa-exclamation'}"></i> ${msg}`;
-                container.appendChild(toast); 
-                setTimeout(() => toast.remove(), 2000);
-            };
-
-            const autoSave = (key, value) => { localStorage.setItem(key, value.trim()); updateLink(); };
-
-            // URL生成関数（前回漏れていた部分）
-            const generateUrl = () => {
-                const base = localStorage.getItem(KEYS.base)||DEFAULTS.baseUrl;
-                const p = new URLSearchParams();
-                const getVal = (k, def) => localStorage.getItem(KEYS[k])||def;
-                
-                const amt = els.amount.value;
-                
+            // 要素を確実に取得
+            const els = {
+                modal: document.getElementById('settings-modal'), 
+                aiModal: document.getElementById('ai-modal'),
+                openBtn: document.getElementById('open-settings'), 
+                closeBtn: document.getElementById('close-settings'),
+                openAiBtn: document.getElementById('open-ai'),
+                closeAiBtn: document.getElementById('close-ai'),
+                analyzeBtn: document.getElementById('ai-analyze-btn'),
+                analyzeSendBtn: document.getElementById('ai-analyze-send-btn'), 
+                aiInput: document.getElementById('ai-input-text'),
+                micBtn: document.getElementById('mic-btn'),
+                cameraInput: document.getEl
