@@ -253,577 +253,6 @@
 
                 const categories = Array.from(els.radios.category).map(r => r.value).join(', ');
                 const payments = Array.from(els.radios.payment).map(r => r.value).join(', ');
-              }
-        input:focus::placeholder { color: transparent; }
-        
-        /* グリッドレイアウト調整 */
-        .compact-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 0.15rem;
-        }
-        .compact-item {
-            padding: 0;
-            height: 3.8rem;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            border-radius: 0.4rem;
-            border-width: 1px;
-            font-size: 0.75rem;
-            line-height: 1.1;
-            transition: all 0.1s;
-        }
-        .compact-item i {
-            font-size: 1.3rem;
-            margin-bottom: 0.15rem;
-        }
-        .compact-item span {
-            transform: scale(1);
-        }
-
-        /* AI Loading Animation */
-        .ai-thinking {
-            background: linear-gradient(270deg, #6366f1, #a855f7, #ec4899);
-            background-size: 600% 600%;
-            animation: ai-gradient 3s ease infinite;
-        }
-        @keyframes ai-gradient { 
-            0%{background-position:0% 50%}
-            50%{background-position:100% 50%}
-            100%{background-position:0% 50%}
-        }
-
-        /* Mic Animation */
-        .mic-listening {
-            animation: pulse-red 1.5s infinite;
-            background-color: #ef4444 !important; /* red-500 */
-            color: white !important;
-            border-color: #ef4444 !important;
-        }
-        @keyframes pulse-red {
-            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
-        }
-    </style>
-</head>
-<body class="bg-gray-100 h-screen overflow-hidden text-gray-800 font-sans flex flex-col cursor-pointer">
-
-    <!-- 設定モーダル -->
-    <div id="settings-modal" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm cursor-auto">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto ring-1 ring-gray-200">
-            <div class="p-4 border-b sticky top-0 bg-white z-10 flex justify-between items-center">
-                <div><h2 class="text-lg font-bold text-gray-800"><i class="fas fa-cog text-gray-400 mr-2"></i>設定</h2></div>
-                <button id="close-settings" class="bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold py-2 px-4 rounded-lg text-sm">閉じる</button>
-            </div>
-            <div class="p-5 space-y-4">
-                <div class="bg-indigo-50 p-3 rounded-lg border border-indigo-100">
-                    <label class="block text-xs font-bold text-indigo-700 mb-1"><i class="fas fa-robot mr-1"></i>Gemini APIキー</label>
-                    <input type="password" id="setting-api-key" placeholder="AIを使う場合はここに入力" class="w-full p-2 border rounded font-mono text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
-                    <p class="text-[10px] text-indigo-500 mt-1">※キーは端末内にのみ保存されます</p>
-                </div>
-
-                <div><label class="block text-xs text-gray-600 font-bold mb-1">フォームURL</label><input type="text" id="setting-base-url" class="w-full p-2 border rounded text-xs font-mono bg-gray-50 text-gray-500" readonly></div>
-                
-                <div class="space-y-3 pt-2 border-t">
-                    <details>
-                        <summary class="text-xs font-bold text-gray-500 cursor-pointer">詳細ID設定 (タップで展開)</summary>
-                        <div class="space-y-3 mt-2 pl-2 border-l-2 border-gray-100">
-                            <div><label class="block text-[10px] font-bold text-gray-400 mb-1">金額</label><input type="text" id="setting-entry-amount" class="w-full p-1 border rounded font-mono text-xs"></div>
-                            <div><label class="block text-[10px] font-bold text-gray-400 mb-1">どんなもの</label><input type="text" id="setting-entry-category" class="w-full p-1 border rounded font-mono text-xs"></div>
-                            <div><label class="block text-[10px] font-bold text-gray-400 mb-1">支払い方法</label><input type="text" id="setting-entry-payment" class="w-full p-1 border rounded font-mono text-xs"></div>
-                            <div><label class="block text-[10px] font-bold text-gray-400 mb-1">日付</label><input type="text" id="setting-entry-date" class="w-full p-1 border rounded font-mono text-xs"></div>
-                            <div><label class="block text-[10px] font-bold text-gray-400 mb-1">備考欄</label><input type="text" id="setting-entry-memo" class="w-full p-1 border rounded font-mono text-xs"></div>
-                        </div>
-                    </details>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- AI入力モーダル -->
-    <div id="ai-modal" class="fixed inset-0 bg-black/60 z-40 hidden flex items-center justify-center p-4 backdrop-blur-sm transition-all duration-300">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
-            <div class="p-4 bg-gradient-to-r from-indigo-600 to-purple-600 flex justify-between items-center text-white shrink-0">
-                <h2 class="font-bold flex items-center gap-2"><i class="fas fa-sparkles text-yellow-300"></i> AI入力</h2>
-                <button id="close-ai" class="text-white/80 hover:text-white"><i class="fas fa-times text-xl"></i></button>
-            </div>
-            <div class="p-4 flex-1 flex flex-col gap-3 overflow-y-auto">
-                <p class="text-xs text-gray-500">レシート撮影、またはテキスト・音声で入力</p>
-                <div class="relative shrink-0">
-                    <textarea id="ai-input-text" class="w-full p-3 border-2 border-indigo-100 rounded-xl focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 outline-none resize-none h-32 text-lg" placeholder="ここに入力..."></textarea>
-                    
-                    <!-- ツールボタンエリア -->
-                    <!-- 修正: ボタンではなく labelタグを使用してInputを直接発火させる -->
-                    <div class="absolute bottom-3 right-3 flex gap-2">
-                        <!-- アルバムボタン (Label) -->
-                        <label for="album-input" class="w-10 h-10 bg-green-100 hover:bg-green-200 rounded-full flex items-center justify-center text-green-600 transition shadow-sm border border-green-200 cursor-pointer" title="アルバムから選択">
-                            <i class="fas fa-image"></i>
-                        </label>
-                        <!-- カメラボタン (Label) -->
-                        <label for="camera-input" class="w-10 h-10 bg-indigo-100 hover:bg-indigo-200 rounded-full flex items-center justify-center text-indigo-600 transition shadow-sm border border-indigo-200 cursor-pointer" title="カメラ起動">
-                            <i class="fas fa-camera"></i>
-                        </label>
-                        <!-- マイクボタン (Buttonのまま) -->
-                        <button id="mic-btn" class="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center text-gray-600 transition shadow-sm border border-gray-200" title="音声入力">
-                            <i class="fas fa-microphone"></i>
-                        </button>
-                    </div>
-                    
-                    <!-- 隠しInput: カメラ用 (capture="environment") -->
-                    <input type="file" id="camera-input" accept="image/*" capture="environment" class="hidden">
-                    <!-- 隠しInput: アルバム用 (captureなし) -->
-                    <input type="file" id="album-input" accept="image/*" class="hidden">
-                </div>
-                
-                <div class="flex gap-2 pb-2 shrink-0">
-                    <button id="ai-analyze-btn" class="flex-1 bg-indigo-600 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-indigo-700 active:scale-95 transition flex items-center justify-center gap-2">
-                        解析のみ <i class="fas fa-magic"></i>
-                    </button>
-                    <button id="ai-analyze-send-btn" class="flex-1 bg-gradient-to-r from-pink-500 to-rose-500 text-white font-bold py-4 rounded-xl shadow-lg hover:from-pink-600 hover:to-rose-600 active:scale-95 transition flex items-center justify-center gap-2">
-                        解析＆送信 <i class="fas fa-paper-plane"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="toast-container"></div>
-
-    <!-- ヘッダー -->
-    <div class="bg-gradient-to-r from-indigo-600 to-blue-600 p-2 pb-2 text-white shadow-md z-10 shrink-0 relative overflow-hidden">
-        <div class="absolute top-0 right-0 p-2 opacity-10 pointer-events-none"><i class="fas fa-wallet text-6xl"></i></div>
-        
-        <div class="flex justify-between items-center mb-1 relative z-10">
-            <div class="bg-white/20 rounded px-2 py-1 flex items-center cursor-pointer hover:bg-white/30 transition">
-                <input type="date" id="input-date" class="bg-transparent text-white font-bold text-sm focus:outline-none cursor-pointer w-28 h-7">
-            </div>
-            <div class="flex gap-3 items-center">
-                <button id="open-ai" class="h-9 px-4 rounded-full bg-gradient-to-br from-fuchsia-500 to-violet-600 hover:from-fuchsia-400 hover:to-violet-500 flex items-center justify-center text-white transition-all shadow-[0_0_10px_rgba(192,38,211,0.5)] border border-white/30 active:scale-95 hover:scale-105 group gap-2">
-                    <svg class="w-4 h-4 drop-shadow-sm group-hover:rotate-180 transition-transform duration-700 ease-in-out" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 2C12 7.52285 16.4772 12 22 12C16.4772 12 12 16.4772 12 22C12 16.4772 7.52285 12 2 12C7.52285 12 12 7.52285 12 2Z" />
-                    </svg>
-                    <span class="font-bold text-sm tracking-wide font-sans">AI</span>
-                </button>
-                <button id="open-settings" class="w-9 h-9 flex items-center justify-center opacity-70 hover:opacity-100 transition"><i class="fas fa-cog text-xl"></i></button>
-            </div>
-        </div>
-        
-        <div class="relative text-center py-0 z-10">
-            <span class="absolute left-1 top-1/2 transform -translate-y-1/2 text-indigo-200 text-3xl font-light pointer-events-none">¥</span>
-            <input type="number" id="input-amount" inputmode="decimal" pattern="[0-9]*" autofocus
-                class="w-full bg-white/10 border-b-2 border-indigo-200/50 text-white text-6xl font-bold text-right px-4 py-2 focus:outline-none focus:bg-white/20 focus:border-white placeholder-indigo-200/30 tracking-tighter rounded-lg transition-all h-20 shadow-inner" 
-                placeholder="0">
-        </div>
-    </div>
-
-    <!-- メインコンテンツ -->
-    <div class="flex-1 p-1 flex flex-col gap-1 overflow-hidden h-full">
-        
-        <!-- 1. 費目 -->
-        <section class="shrink-0">
-            <h3 class="text-[10px] font-bold text-gray-500 uppercase mb-0.5 ml-1"><i class="fas fa-tag mr-1"></i>どんなもの</h3>
-            <div class="compact-grid">
-                <label class="cursor-pointer relative group"><input type="radio" name="category" value="食費" class="category-radio sr-only" checked><div class="compact-item bg-white border-gray-300"><i class="fas fa-utensils text-orange-400"></i><span>食費</span></div></label>
-                <label class="cursor-pointer relative group"><input type="radio" name="category" value="日用品" class="category-radio sr-only"><div class="compact-item bg-white border-gray-300"><i class="fas fa-shopping-basket text-green-400"></i><span>日用品</span></div></label>
-                <label class="cursor-pointer relative group"><input type="radio" name="category" value="衣服・美容費" class="category-radio sr-only"><div class="compact-item bg-white border-gray-300"><i class="fas fa-tshirt text-pink-400"></i><span>衣服美容</span></div></label>
-                <label class="cursor-pointer relative group"><input type="radio" name="category" value="娯楽・交際費" class="category-radio sr-only"><div class="compact-item bg-white border-gray-300"><i class="fas fa-glass-cheers text-purple-400"></i><span>娯楽交際</span></div></label>
-                <label class="cursor-pointer relative group"><input type="radio" name="category" value="交通費" class="category-radio sr-only"><div class="compact-item bg-white border-gray-300"><i class="fas fa-train text-blue-400"></i><span>交通費</span></div></label>
-                <label class="cursor-pointer relative group"><input type="radio" name="category" value="通信費" class="category-radio sr-only"><div class="compact-item bg-white border-gray-300"><i class="fas fa-wifi text-cyan-500"></i><span>通信費</span></div></label>
-                <label class="cursor-pointer relative group"><input type="radio" name="category" value="医療費" class="category-radio sr-only"><div class="compact-item bg-white border-gray-300"><i class="fas fa-clinic-medical text-red-400"></i><span>医療費</span></div></label>
-                <label class="cursor-pointer relative group"><input type="radio" name="category" value="その他" class="category-radio sr-only"><div class="compact-item bg-white border-gray-300"><i class="fas fa-ellipsis-h text-gray-400"></i><span>その他</span></div></label>
-            </div>
-        </section>
-
-        <!-- 2. 支払い方法 -->
-        <section class="shrink-0">
-            <h3 class="text-[10px] font-bold text-gray-500 uppercase mb-0.5 mt-0.5 ml-1"><i class="fas fa-wallet mr-1"></i>支払い方法</h3>
-            <div class="compact-grid">
-                <label class="cursor-pointer relative group"><input type="radio" name="payment" value="現金" class="payment-radio sr-only" checked><div class="compact-item bg-white border-gray-300"><i class="fas fa-coins text-gray-500"></i><span>現金</span></div></label>
-                <label class="cursor-pointer relative group"><input type="radio" name="payment" value="paypay" class="payment-radio sr-only"><div class="compact-item bg-white border-gray-300"><span class="font-bold text-red-600 text-[10px] mb-0.5">P</span><span>PayPay</span></div></label>
-                <label class="cursor-pointer relative group"><input type="radio" name="payment" value="モバイルSuica" class="payment-radio sr-only"><div class="compact-item bg-white border-gray-300"><i class="fas fa-mobile-alt text-green-600"></i><span>Suica</span></div></label>
-                <label class="cursor-pointer relative group"><input type="radio" name="payment" value="olive" class="payment-radio sr-only"><div class="compact-item bg-white border-gray-300"><i class="fas fa-leaf text-lime-600"></i><span>olive</span></div></label>
-                <label class="cursor-pointer relative group"><input type="radio" name="payment" value="三井住友ゴールドカード" class="payment-radio sr-only"><div class="compact-item bg-white border-gray-300"><i class="fas fa-credit-card text-yellow-600"></i><span class="scale-90">住友Gold</span></div></label>
-                <label class="cursor-pointer relative group"><input type="radio" name="payment" value="楽天カード" class="payment-radio sr-only"><div class="compact-item bg-white border-gray-300"><i class="fas fa-credit-card text-pink-600"></i><span>楽天</span></div></label>
-                <label class="cursor-pointer relative group"><input type="radio" name="payment" value="viewカード" class="payment-radio sr-only"><div class="compact-item bg-white border-gray-300"><i class="fas fa-subway text-blue-600"></i><span>View</span></div></label>
-                <label class="cursor-pointer relative group"><input type="radio" name="payment" value="その他" class="payment-radio sr-only"><div class="compact-item bg-white border-gray-300"><i class="fas fa-ellipsis-h text-gray-400"></i><span>他</span></div></label>
-            </div>
-        </section>
-
-        <!-- 3. メモ & 送信 -->
-        <section class="flex-1 flex flex-col justify-end gap-1.5 mt-0.5 pb-1">
-            <div class="relative w-full">
-                <i class="fas fa-pen absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-xl pointer-events-none"></i>
-                <input type="text" id="input-memo" 
-                    class="w-full rounded-xl border-2 border-gray-300 bg-white pl-12 pr-4 h-14 outline-none focus:ring-4 focus:ring-indigo-200 focus:border-indigo-600 transition text-xl font-bold text-gray-700 shadow-sm placeholder-gray-400" 
-                    placeholder="備考を入力..." 
-                    enterkeyhint="go">
-            </div>
-            
-            <button id="send-btn" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold h-16 rounded-xl shadow-lg transform active:scale-[0.98] transition flex items-center justify-center gap-3 text-2xl group relative overflow-hidden">
-                <span class="relative z-10">送信する</span> <i class="fas fa-paper-plane group-hover:translate-x-1 transition-transform relative z-10"></i>
-            </button>
-            <div class="text-center h-0 opacity-0 overflow-hidden"><a id="fallback-link" href="#" target="_blank">.</a></div>
-        </section>
-    </div>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // 基本設定
-            const DEFAULTS = {
-                baseUrl: 'https://docs.google.com/forms/d/e/1FAIpQLSdyfO5WEIVhLXzE9o7R29heMt6w5Pvf-iEgfZFPztJChzzO_Q/viewform?usp=header', 
-                amountId: 'entry.319120210',    
-                dateId: 'entry.217676147',      
-                categoryId: 'entry.1341647002', 
-                paymentId: 'entry.594957767',   
-                memoId: 'entry.1139655263'      
-            };
-
-            const PREFIX = 'budget_2026_';
-            const KEYS = { base: PREFIX+'baseUrl', amount: PREFIX+'entryAmount', payment: PREFIX+'entryPayment', date: PREFIX+'entryDate', category: PREFIX+'entryCategory', memo: PREFIX+'entryMemo', apiKey: PREFIX+'apiKey' };
-
-            // 要素取得
-            const els = {
-                modal: document.getElementById('settings-modal'), 
-                aiModal: document.getElementById('ai-modal'),
-                openBtn: document.getElementById('open-settings'), 
-                closeBtn: document.getElementById('close-settings'),
-                openAiBtn: document.getElementById('open-ai'),
-                closeAiBtn: document.getElementById('close-ai'),
-             border-radius: 0.4rem;
-            border-width: 1px;
-            font-size: 0.75rem; /* 文字サイズ拡大 */
-            line-height: 1.1;
-            transition: all 0.1s;
-        }
-        .compact-item i {
-            font-size: 1.3rem; /* アイコンサイズ拡大 */
-            margin-bottom: 0.15rem;
-        }
-        .compact-item span {
-            transform: scale(1); /* 文字スケールを通常に */
-        }
-
-        /* AI Loading Animation */
-        .ai-thinking {
-            background: linear-gradient(270deg, #6366f1, #a855f7, #ec4899);
-            background-size: 600% 600%;
-            animation: ai-gradient 3s ease infinite;
-        }
-        @keyframes ai-gradient { 
-            0%{background-position:0% 50%}
-            50%{background-position:100% 50%}
-            100%{background-position:0% 50%}
-        }
-
-        /* Mic Animation */
-        .mic-listening {
-            animation: pulse-red 1.5s infinite;
-            background-color: #ef4444 !important; /* red-500 */
-            color: white !important;
-            border-color: #ef4444 !important;
-        }
-        @keyframes pulse-red {
-            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
-        }
-    </style>
-</head>
-<body class="bg-gray-100 h-screen overflow-hidden text-gray-800 font-sans flex flex-col cursor-pointer">
-
-    <!-- 設定モーダル (変更なし) -->
-    <div id="settings-modal" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm cursor-auto">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto ring-1 ring-gray-200">
-            <div class="p-4 border-b sticky top-0 bg-white z-10 flex justify-between items-center">
-                <div><h2 class="text-lg font-bold text-gray-800"><i class="fas fa-cog text-gray-400 mr-2"></i>設定</h2></div>
-                <button id="close-settings" class="bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold py-2 px-4 rounded-lg text-sm">閉じる</button>
-            </div>
-            <div class="p-5 space-y-4">
-                <div class="bg-indigo-50 p-3 rounded-lg border border-indigo-100">
-                    <label class="block text-xs font-bold text-indigo-700 mb-1"><i class="fas fa-robot mr-1"></i>Gemini APIキー</label>
-                    <input type="password" id="setting-api-key" placeholder="AIを使う場合はここに入力" class="w-full p-2 border rounded font-mono text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
-                    <p class="text-[10px] text-indigo-500 mt-1">※キーは端末内にのみ保存されます</p>
-                </div>
-
-                <div><label class="block text-xs text-gray-600 font-bold mb-1">フォームURL</label><input type="text" id="setting-base-url" class="w-full p-2 border rounded text-xs font-mono bg-gray-50 text-gray-500" readonly></div>
-                
-                <div class="space-y-3 pt-2 border-t">
-                    <details>
-                        <summary class="text-xs font-bold text-gray-500 cursor-pointer">詳細ID設定 (タップで展開)</summary>
-                        <div class="space-y-3 mt-2 pl-2 border-l-2 border-gray-100">
-                            <div><label class="block text-[10px] font-bold text-gray-400 mb-1">金額</label><input type="text" id="setting-entry-amount" class="w-full p-1 border rounded font-mono text-xs"></div>
-                            <div><label class="block text-[10px] font-bold text-gray-400 mb-1">どんなもの</label><input type="text" id="setting-entry-category" class="w-full p-1 border rounded font-mono text-xs"></div>
-                            <div><label class="block text-[10px] font-bold text-gray-400 mb-1">支払い方法</label><input type="text" id="setting-entry-payment" class="w-full p-1 border rounded font-mono text-xs"></div>
-                            <div><label class="block text-[10px] font-bold text-gray-400 mb-1">日付</label><input type="text" id="setting-entry-date" class="w-full p-1 border rounded font-mono text-xs"></div>
-                            <div><label class="block text-[10px] font-bold text-gray-400 mb-1">備考欄</label><input type="text" id="setting-entry-memo" class="w-full p-1 border rounded font-mono text-xs"></div>
-                        </div>
-                    </details>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- AI入力モーダル (修正: キーボード表示時に隠れないよう中央配置＆スクロール対応) -->
-    <div id="ai-modal" class="fixed inset-0 bg-black/60 z-40 hidden flex items-center justify-center p-4 backdrop-blur-sm transition-all duration-300">
-        <!-- ボトムシート型(items-end)からダイアログ型(items-center)に変更 -->
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
-            <div class="p-4 bg-gradient-to-r from-indigo-600 to-purple-600 flex justify-between items-center text-white shrink-0">
-                <h2 class="font-bold flex items-center gap-2"><i class="fas fa-sparkles text-yellow-300"></i> AI入力</h2>
-                <button id="close-ai" class="text-white/80 hover:text-white"><i class="fas fa-times text-xl"></i></button>
-            </div>
-            <!-- overflow-y-autoを追加して中身がスクロールするように変更 -->
-            <div class="p-4 flex-1 flex flex-col gap-3 overflow-y-auto">
-                <p class="text-xs text-gray-500">例：「昨日 コンビニで1200円 飲み会代」<br>またはレシートを撮影してください</p>
-                <div class="relative shrink-0">
-                    <textarea id="ai-input-text" class="w-full p-3 border-2 border-indigo-100 rounded-xl focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 outline-none resize-none h-32 text-lg" placeholder="ここに入力..."></textarea>
-                    
-                    <div class="absolute bottom-3 right-3 flex gap-2">
-                         <button id="camera-btn" class="w-10 h-10 bg-indigo-100 hover:bg-indigo-200 rounded-full flex items-center justify-center text-indigo-600 transition shadow-sm border border-indigo-200" title="レシート撮影">
-                            <i class="fas fa-camera"></i>
-                        </button>
-                        <button id="mic-btn" class="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center text-gray-600 transition shadow-sm border border-gray-200" title="音声入力">
-                            <i class="fas fa-microphone"></i>
-                        </button>
-                    </div>
-                    <input type="file" id="receipt-input" accept="image/*" capture="environment" class="hidden">
-                </div>
-                
-                <div class="flex gap-2 pb-2 shrink-0">
-                    <button id="ai-analyze-btn" class="flex-1 bg-indigo-600 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-indigo-700 active:scale-95 transition flex items-center justify-center gap-2">
-                        解析のみ <i class="fas fa-magic"></i>
-                    </button>
-                    <button id="ai-analyze-send-btn" class="flex-1 bg-gradient-to-r from-pink-500 to-rose-500 text-white font-bold py-4 rounded-xl shadow-lg hover:from-pink-600 hover:to-rose-600 active:scale-95 transition flex items-center justify-center gap-2">
-                        解析＆送信 <i class="fas fa-paper-plane"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="toast-container"></div>
-
-    <!-- ヘッダー (サイズ拡大) -->
-    <div class="bg-gradient-to-r from-indigo-600 to-blue-600 p-2 pb-2 text-white shadow-md z-10 shrink-0 relative overflow-hidden">
-        <div class="absolute top-0 right-0 p-2 opacity-10 pointer-events-none"><i class="fas fa-wallet text-6xl"></i></div>
-        
-        <div class="flex justify-between items-center mb-1 relative z-10">
-            <div class="bg-white/20 rounded px-2 py-1 flex items-center cursor-pointer hover:bg-white/30 transition">
-                <input type="date" id="input-date" class="bg-transparent text-white font-bold text-sm focus:outline-none cursor-pointer w-28 h-7">
-            </div>
-            <div class="flex gap-3 items-center">
-                <!-- AIボタン -->
-                <button id="open-ai" class="h-9 px-4 rounded-full bg-gradient-to-br from-fuchsia-500 to-violet-600 hover:from-fuchsia-400 hover:to-violet-500 flex items-center justify-center text-white transition-all shadow-[0_0_10px_rgba(192,38,211,0.5)] border border-white/30 active:scale-95 hover:scale-105 group gap-2">
-                    <svg class="w-4 h-4 drop-shadow-sm group-hover:rotate-180 transition-transform duration-700 ease-in-out" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 2C12 7.52285 16.4772 12 22 12C16.4772 12 12 16.4772 12 22C12 16.4772 7.52285 12 2 12C7.52285 12 12 7.52285 12 2Z" />
-                    </svg>
-                    <span class="font-bold text-sm tracking-wide font-sans">AI</span>
-                </button>
-                <button id="open-settings" class="w-9 h-9 flex items-center justify-center opacity-70 hover:opacity-100 transition"><i class="fas fa-cog text-xl"></i></button>
-            </div>
-        </div>
-        
-        <!-- 金額入力 (拡大) -->
-        <div class="relative text-center py-0 z-10">
-            <span class="absolute left-1 top-1/2 transform -translate-y-1/2 text-indigo-200 text-3xl font-light pointer-events-none">¥</span>
-            <input type="number" id="input-amount" inputmode="decimal" pattern="[0-9]*" autofocus
-                class="w-full bg-white/10 border-b-2 border-indigo-200/50 text-white text-6xl font-bold text-right px-4 py-2 focus:outline-none focus:bg-white/20 focus:border-white placeholder-indigo-200/30 tracking-tighter rounded-lg transition-all h-20 shadow-inner" 
-                placeholder="0">
-        </div>
-    </div>
-
-    <!-- メインコンテンツ (余白削減・要素拡大) -->
-    <div class="flex-1 p-1 flex flex-col gap-1 overflow-hidden h-full">
-        
-        <!-- 1. 費目 (どんなもの) -->
-        <section class="shrink-0">
-            <h3 class="text-[10px] font-bold text-gray-500 uppercase mb-0.5 ml-1"><i class="fas fa-tag mr-1"></i>どんなもの</h3>
-            <div class="compact-grid">
-                <label class="cursor-pointer relative group"><input type="radio" name="category" value="食費" class="category-radio sr-only" checked><div class="compact-item bg-white border-gray-300"><i class="fas fa-utensils text-orange-400"></i><span>食費</span></div></label>
-                <label class="cursor-pointer relative group"><input type="radio" name="category" value="日用品" class="category-radio sr-only"><div class="compact-item bg-white border-gray-300"><i class="fas fa-shopping-basket text-green-400"></i><span>日用品</span></div></label>
-                <label class="cursor-pointer relative group"><input type="radio" name="category" value="衣服・美容費" class="category-radio sr-only"><div class="compact-item bg-white border-gray-300"><i class="fas fa-tshirt text-pink-400"></i><span>衣服美容</span></div></label>
-                <label class="cursor-pointer relative group"><input type="radio" name="category" value="娯楽・交際費" class="category-radio sr-only"><div class="compact-item bg-white border-gray-300"><i class="fas fa-glass-cheers text-purple-400"></i><span>娯楽交際</span></div></label>
-                <label class="cursor-pointer relative group"><input type="radio" name="category" value="交通費" class="category-radio sr-only"><div class="compact-item bg-white border-gray-300"><i class="fas fa-train text-blue-400"></i><span>交通費</span></div></label>
-                <label class="cursor-pointer relative group"><input type="radio" name="category" value="通信費" class="category-radio sr-only"><div class="compact-item bg-white border-gray-300"><i class="fas fa-wifi text-cyan-500"></i><span>通信費</span></div></label>
-                <label class="cursor-pointer relative group"><input type="radio" name="category" value="医療費" class="category-radio sr-only"><div class="compact-item bg-white border-gray-300"><i class="fas fa-clinic-medical text-red-400"></i><span>医療費</span></div></label>
-                <label class="cursor-pointer relative group"><input type="radio" name="category" value="その他" class="category-radio sr-only"><div class="compact-item bg-white border-gray-300"><i class="fas fa-ellipsis-h text-gray-400"></i><span>その他</span></div></label>
-            </div>
-        </section>
-
-        <!-- 2. 支払い方法 -->
-        <section class="shrink-0">
-            <h3 class="text-[10px] font-bold text-gray-500 uppercase mb-0.5 mt-0.5 ml-1"><i class="fas fa-wallet mr-1"></i>支払い方法</h3>
-            <div class="compact-grid">
-                <label class="cursor-pointer relative group"><input type="radio" name="payment" value="現金" class="payment-radio sr-only" checked><div class="compact-item bg-white border-gray-300"><i class="fas fa-coins text-gray-500"></i><span>現金</span></div></label>
-                <label class="cursor-pointer relative group"><input type="radio" name="payment" value="paypay" class="payment-radio sr-only"><div class="compact-item bg-white border-gray-300"><span class="font-bold text-red-600 text-[10px] mb-0.5">P</span><span>PayPay</span></div></label>
-                <label class="cursor-pointer relative group"><input type="radio" name="payment" value="モバイルSuica" class="payment-radio sr-only"><div class="compact-item bg-white border-gray-300"><i class="fas fa-mobile-alt text-green-600"></i><span>Suica</span></div></label>
-                <label class="cursor-pointer relative group"><input type="radio" name="payment" value="olive" class="payment-radio sr-only"><div class="compact-item bg-white border-gray-300"><i class="fas fa-leaf text-lime-600"></i><span>olive</span></div></label>
-                <label class="cursor-pointer relative group"><input type="radio" name="payment" value="三井住友ゴールドカード" class="payment-radio sr-only"><div class="compact-item bg-white border-gray-300"><i class="fas fa-credit-card text-yellow-600"></i><span class="scale-90">住友Gold</span></div></label>
-                <label class="cursor-pointer relative group"><input type="radio" name="payment" value="楽天カード" class="payment-radio sr-only"><div class="compact-item bg-white border-gray-300"><i class="fas fa-credit-card text-pink-600"></i><span>楽天</span></div></label>
-                <label class="cursor-pointer relative group"><input type="radio" name="payment" value="viewカード" class="payment-radio sr-only"><div class="compact-item bg-white border-gray-300"><i class="fas fa-subway text-blue-600"></i><span>View</span></div></label>
-                <label class="cursor-pointer relative group"><input type="radio" name="payment" value="その他" class="payment-radio sr-only"><div class="compact-item bg-white border-gray-300"><i class="fas fa-ellipsis-h text-gray-400"></i><span>他</span></div></label>
-            </div>
-        </section>
-
-        <!-- 3. メモ & 送信 -->
-        <section class="flex-1 flex flex-col justify-end gap-1.5 mt-0.5 pb-1">
-            <div class="relative w-full">
-                <i class="fas fa-pen absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-xl pointer-events-none"></i>
-                <input type="text" id="input-memo" 
-                    class="w-full rounded-xl border-2 border-gray-300 bg-white pl-12 pr-4 h-14 outline-none focus:ring-4 focus:ring-indigo-200 focus:border-indigo-600 transition text-xl font-bold text-gray-700 shadow-sm placeholder-gray-400" 
-                    placeholder="備考を入力..." 
-                    enterkeyhint="go">
-            </div>
-            
-            <button id="send-btn" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold h-16 rounded-xl shadow-lg transform active:scale-[0.98] transition flex items-center justify-center gap-3 text-2xl group relative overflow-hidden">
-                <span class="relative z-10">送信する</span> <i class="fas fa-paper-plane group-hover:translate-x-1 transition-transform relative z-10"></i>
-            </button>
-            <div class="text-center h-0 opacity-0 overflow-hidden"><a id="fallback-link" href="#" target="_blank">.</a></div>
-        </section>
-    </div>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // 基本設定
-            const DEFAULTS = {
-                baseUrl: 'https://docs.google.com/forms/d/e/1FAIpQLSdyfO5WEIVhLXzE9o7R29heMt6w5Pvf-iEgfZFPztJChzzO_Q/viewform?usp=header', 
-                amountId: 'entry.319120210',    
-                dateId: 'entry.217676147',      
-                categoryId: 'entry.1341647002', 
-                paymentId: 'entry.594957767',   
-                memoId: 'entry.1139655263'      
-            };
-
-            const PREFIX = 'budget_2026_';
-            const KEYS = { base: PREFIX+'baseUrl', amount: PREFIX+'entryAmount', payment: PREFIX+'entryPayment', date: PREFIX+'entryDate', category: PREFIX+'entryCategory', memo: PREFIX+'entryMemo', apiKey: PREFIX+'apiKey' };
-
-            // 要素取得
-            const els = {
-                modal: document.getElementById('settings-modal'), 
-                aiModal: document.getElementById('ai-modal'),
-                openBtn: document.getElementById('open-settings'), 
-                closeBtn: document.getElementById('close-settings'),
-                openAiBtn: document.getElementById('open-ai'),
-                closeAiBtn: document.getElementById('close-ai'),
-                analyzeBtn: document.getElementById('ai-analyze-btn'),
-                analyzeSendBtn: document.getElementById('ai-analyze-send-btn'), 
-                aiInput: document.getElementById('ai-input-text'),
-                micBtn: document.getElementById('mic-btn'),
-                cameraBtn: document.getElementById('camera-btn'),
-                receiptInput: document.getElementById('receipt-input'),
-                sendBtn: document.getElementById('send-btn'), 
-                amount: document.getElementById('input-amount'), 
-                date: document.getElementById('input-date'), 
-                memo: document.getElementById('input-memo'),
-                fallbackLink: document.getElementById('fallback-link'), 
-                container: document.getElementById('toast-container'),
-                radios: { category: document.querySelectorAll('input[name="category"]'), payment: document.querySelectorAll('input[name="payment"]') },
-                settings: {
-                    base: document.getElementById('setting-base-url'), amount: document.getElementById('setting-entry-amount'), payment: document.getElementById('setting-entry-payment'),
-                    date: document.getElementById('setting-entry-date'), category: document.getElementById('setting-entry-category'), memo: document.getElementById('setting-entry-memo'),
-                    apiKey: document.getElementById('setting-api-key')
-                }
-            };
-            
-            // --- Speech Recognition Logic ---
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            
-            if (SpeechRecognition) {
-                const recognition = new SpeechRecognition();
-                recognition.lang = 'ja-JP';
-                recognition.interimResults = false;
-                recognition.continuous = true; // 修正: 連続入力をONにして、勝手に止まらないようにした
-
-                els.micBtn.onclick = () => {
-                    if (els.micBtn.classList.contains('mic-listening')) {
-                        recognition.stop();
-                    } else {
-                        recognition.start();
-                    }
-                };
-
-                recognition.onstart = () => {
-                    els.micBtn.classList.add('mic-listening');
-                };
-
-                recognition.onend = () => {
-                    els.micBtn.classList.remove('mic-listening');
-                };
-
-                recognition.onresult = (event) => {
-                    // 修正: 連続入力に対応するため、最新の結果(配列の最後)を取得するように変更
-                    const lastIndex = event.results.length - 1;
-                    const transcript = event.results[lastIndex][0].transcript;
-                    
-                    const current = els.aiInput.value;
-                    els.aiInput.value = current ? `${current} ${transcript}` : transcript;
-                    els.aiInput.scrollTop = els.aiInput.scrollHeight;
-                };
-
-                // エラーハンドリング
-                recognition.onerror = (event) => {
-                    els.micBtn.classList.remove('mic-listening');
-                    let msg = '音声認識エラー';
-                    
-                    if (event.error === 'no-speech') {
-                        // no-speechの場合は無視して再開させても良いが、今回は通知だけ抑制するかメッセージを控えめに
-                        msg = '音声が検出されませんでした'; 
-                    } else if (event.error === 'audio-capture') {
-                        msg = 'マイクが見つかりません';
-                    } else if (event.error === 'not-allowed') {
-                        msg = 'マイクの使用が許可されていません';
-                    } else if (event.error === 'network') {
-                        msg = 'ネットワークエラーが発生しました';
-                    }
-                    
-                    console.error('Speech recognition error:', event.error);
-                    // no-speech以外のみトースト表示（連続入力時に無言で切れるとウザいので）
-                    if (event.error !== 'no-speech') {
-                        showToast(msg, 'error');
-                    }
-                };
-            } else {
-                els.micBtn.style.display = 'none';
-            }
-
-            // --- Image Handling Logic ---
-            els.cameraBtn.onclick = () => els.receiptInput.click();
-
-            els.receiptInput.onchange = async (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-
-                const reader = new FileReader();
-                reader.onload = async (e) => {
-                    const base64Data = e.target.result.split(',')[1];
-                    const mimeType = file.type;
-                    els.aiInput.value = "（レシート画像を読み込み中...）";
-                    await callGemini("このレシート画像を解析して、合計金額、日付、店名を読み取り、適切なカテゴリと支払い方法を推測してください。", base64Data, mimeType);
-                };
-                reader.readAsDataURL(file);
-            };
-
-
-            // --- AI Logic (Multimodal) ---
-            const callGemini = async (text, imageBase64 = null, mimeType = null, autoSend = false) => {
-                const apiKey = localStorage.getItem(KEYS.apiKey);
-                if (!apiKey) {
-                    showToast('設定からAPIキーを入力してください', 'error');
-                    els.aiModal.classList.add('hidden');
-                    els.modal.classList.remove('hidden');
-                    return;
-                }
-
-                // ボタンの状態変更
-                const targetBtn = autoSend ? els.analyzeSendBtn : els.analyzeBtn;
-                const originalText = targetBtn.innerHTML;
-                targetBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 解析中...';
-                targetBtn.classList.add('ai-thinking');
-
-                const categories = Array.from(els.radios.category).map(r => r.value).join(', ');
-                const payments = Array.from(els.radios.payment).map(r => r.value).join(', ');
                 const today = els.date.value || new Date().toISOString().split('T')[0];
 
                 const prompt = `
@@ -845,8 +274,8 @@
                     Return JSON only:
                     {
                         "amount": number | null,
-                        "category": "string (must be one of available)" | null,
-                        "payment": "string (must be one of available)" | null,
+                        "category": "string" | null,
+                        "payment": "string" | null,
                         "date": "YYYY-MM-DD" | null,
                         "memo": "string" | null
                     }
@@ -854,12 +283,7 @@
 
                 const parts = [{ text: prompt }];
                 if (imageBase64 && mimeType) {
-                    parts.push({
-                        inlineData: {
-                            mimeType: mimeType,
-                            data: imageBase64
-                        }
-                    });
+                    parts.push({ inlineData: { mimeType: mimeType, data: imageBase64 } });
                 }
 
                 try {
@@ -873,9 +297,9 @@
                     });
 
                     const data = await response.json();
+                    if (!data.candidates) throw new Error('API Error');
                     const result = JSON.parse(data.candidates[0].content.parts[0].text);
 
-                    // Apply results
                     if(result.amount) els.amount.value = result.amount;
                     if(result.date) els.date.value = result.date;
                     if(result.memo) els.memo.value = result.memo;
@@ -892,12 +316,10 @@
                     showToast('AI解析完了！' + (autoSend ? ' 送信します...' : ' ✨'));
                     els.aiModal.classList.add('hidden');
                     els.aiInput.value = '';
-                    els.receiptInput.value = ''; // Reset file input
                     updateLink();
 
-                    if(autoSend) {
-                        setTimeout(() => els.sendBtn.click(), 500); // 少し待ってから送信
-                    }
+                    if(autoSend) setTimeout(() => els.sendBtn.click(), 500);
+
                 } catch (e) {
                     console.error(e);
                     showToast('解析に失敗しました', 'error');
@@ -907,60 +329,98 @@
                 }
             };
 
-            // --- Basic Logic ---
-            const showToast = (msg, type='success') => {
-                const toast = document.createElement('div');
-                toast.className = `saved-toast ${type==='success'?'bg-slate-800':'bg-red-600'} text-white px-4 py-2 rounded-full shadow-lg text-xs font-bold flex items-center gap-2`;
-                toast.innerHTML = `<i class="fas ${type==='success'?'fa-check':'fa-exclamation'}"></i> ${msg}`;
-                els.container.appendChild(toast); setTimeout(() => toast.remove(), 2000);
-            };
-            const autoSave = (key, value) => { localStorage.setItem(key, value.trim()); updateLink(); };
-            const initDate = () => { const d=new Date(); els.date.value=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
-            
-            const generateUrl = () => {
-                const base = localStorage.getItem(KEYS.base)||DEFAULTS.baseUrl;
-                const p = new URLSearchParams();
-                const getVal = (k, def) => localStorage.getItem(KEYS[k])||def;
-                
-                const amt = els.amount.value;
-                if(amt) p.append(getVal('amount', DEFAULTS.amountId), amt);
-                p.append(getVal('category', DEFAULTS.categoryId), document.querySelector('input[name="category"]:checked').value);
-                p.append(getVal('payment', DEFAULTS.paymentId), document.querySelector('input[name="payment"]:checked').value);
-                p.append(getVal('date', DEFAULTS.dateId), els.date.value);
-                if(els.memo.value) p.append(getVal('memo', DEFAULTS.memoId), els.memo.value);
-
-                return `${base}${base.includes('?')?'&':'?'}${p.toString()}`;
+            const handleImageSelect = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    const base64Data = e.target.result.split(',')[1];
+                    const mimeType = file.type;
+                    els.aiInput.value = "（画像を読み込み中...）";
+                    await callGemini("この画像を解析して...", base64Data, mimeType);
+                    els.cameraInput.value = '';
+                    els.albumInput.value = '';
+                };
+                reader.readAsDataURL(file);
             };
 
-            const updateLink = () => { els.fallbackLink.href = generateUrl(); };
-            
-            const loadSettings = () => {
-                const set = (el, k, def) => { if(el) el.value = localStorage.getItem(KEYS[k])||def || ''; };
-                set(els.settings.base, 'base', DEFAULTS.baseUrl); set(els.settings.amount, 'amount', DEFAULTS.amountId);
-                set(els.settings.payment, 'payment', DEFAULTS.paymentId); set(els.settings.date, 'date', DEFAULTS.dateId);
-                set(els.settings.category, 'category', DEFAULTS.categoryId); set(els.settings.memo, 'memo', DEFAULTS.memoId);
-                set(els.settings.apiKey, 'apiKey', '');
+            // --- 2. 要素取得 ---
+            const DEFAULTS = {
+                baseUrl: 'https://docs.google.com/forms/d/e/1FAIpQLSdyfO5WEIVhLXzE9o7R29heMt6w5Pvf-iEgfZFPztJChzzO_Q/viewform?usp=header', 
+                amountId: 'entry.319120210',    
+                dateId: 'entry.217676147',      
+                categoryId: 'entry.1341647002', 
+                paymentId: 'entry.594957767',   
+                memoId: 'entry.1139655263'      
+            };
+            const PREFIX = 'budget_2026_';
+            const KEYS = { base: PREFIX+'baseUrl', amount: PREFIX+'entryAmount', payment: PREFIX+'entryPayment', date: PREFIX+'entryDate', category: PREFIX+'entryCategory', memo: PREFIX+'entryMemo', apiKey: PREFIX+'apiKey' };
+
+            const els = {
+                modal: document.getElementById('settings-modal'), 
+                aiModal: document.getElementById('ai-modal'),
+                openBtn: document.getElementById('open-settings'), 
+                closeBtn: document.getElementById('close-settings'),
+                openAiBtn: document.getElementById('open-ai'),
+                closeAiBtn: document.getElementById('close-ai'),
+                analyzeBtn: document.getElementById('ai-analyze-btn'),
+                analyzeSendBtn: document.getElementById('ai-analyze-send-btn'), 
+                aiInput: document.getElementById('ai-input-text'),
+                micBtn: document.getElementById('mic-btn'),
+                cameraInput: document.getElementById('camera-input'), 
+                albumInput: document.getElementById('album-input'), 
+                sendBtn: document.getElementById('send-btn'), 
+                amount: document.getElementById('input-amount'), 
+                date: document.getElementById('input-date'), 
+                memo: document.getElementById('input-memo'),
+                fallbackLink: document.getElementById('fallback-link'), 
+                radios: { category: document.querySelectorAll('input[name="category"]'), payment: document.querySelectorAll('input[name="payment"]') },
+                settings: {
+                    base: document.getElementById('setting-base-url'), amount: document.getElementById('setting-entry-amount'), payment: document.getElementById('setting-entry-payment'),
+                    date: document.getElementById('setting-entry-date'), category: document.getElementById('setting-entry-category'), memo: document.getElementById('setting-entry-memo'),
+                    apiKey: document.getElementById('setting-api-key')
+                }
             };
 
-            // Event Listeners
-            Object.keys(els.settings).forEach(k => { 
-                if(els.settings[k]) els.settings[k].addEventListener('input', e => {
-                    const storeKey = k === 'apiKey' ? 'apiKey' : k.replace('setting-entry-','').replace('setting-base-url','base');
-                    autoSave(KEYS[storeKey], e.target.value);
-                }); 
-            });
+            // --- 3. イベントリスナー設定 ---
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (SpeechRecognition) {
+                const recognition = new SpeechRecognition();
+                recognition.lang = 'ja-JP';
+                recognition.interimResults = false;
+                recognition.continuous = true;
+
+                els.micBtn.onclick = () => {
+                    if (els.micBtn.classList.contains('mic-listening')) recognition.stop();
+                    else recognition.start();
+                };
+                recognition.onstart = () => els.micBtn.classList.add('mic-listening');
+                recognition.onend = () => els.micBtn.classList.remove('mic-listening');
+                recognition.onresult = (event) => {
+                    const lastIndex = event.results.length - 1;
+                    const transcript = event.results[lastIndex][0].transcript;
+                    const current = els.aiInput.value;
+                    els.aiInput.value = current ? `${current} ${transcript}` : transcript;
+                    els.aiInput.scrollTop = els.aiInput.scrollHeight;
+                };
+                recognition.onerror = (e) => {
+                    els.micBtn.classList.remove('mic-listening');
+                    if(e.error !== 'no-speech') showToast('音声認識エラー', 'error');
+                };
+            } else {
+                els.micBtn.style.display = 'none';
+            }
+
+            els.cameraInput.onchange = handleImageSelect;
+            els.albumInput.onchange = handleImageSelect;
 
             els.openBtn.onclick = () => { loadSettings(); els.modal.classList.remove('hidden'); };
             els.closeBtn.onclick = () => { els.modal.classList.add('hidden'); };
             
-            // キーボード自動表示を停止
-            els.openAiBtn.onclick = () => { 
-                els.aiModal.classList.remove('hidden'); 
-            };
-            
+            // AIモーダル開閉
+            els.openAiBtn.onclick = () => { els.aiModal.classList.remove('hidden'); };
             els.closeAiBtn.onclick = () => { els.aiModal.classList.add('hidden'); };
             
-            // 修正: ボタンごとの処理を追加
             els.analyzeBtn.onclick = () => { 
                 if(!els.aiInput.value.trim()) return;
                 callGemini(els.aiInput.value, null, null, false); 
@@ -974,14 +434,7 @@
             [...els.radios.category, ...els.radios.payment].forEach(e => e.addEventListener('change', updateLink));
 
             els.memo.addEventListener('keydown', e => { if(e.key==='Enter'){ e.preventDefault(); els.sendBtn.click(); }});
-            
-            // ここに追加: AI入力欄でEnterを押したときの挙動
-            els.aiInput.addEventListener('keydown', e => { 
-                if(e.key==='Enter'){ 
-                    e.preventDefault(); 
-                    els.analyzeBtn.click(); 
-                }
-            });
+            els.aiInput.addEventListener('keydown', e => { if(e.key==='Enter'){ e.preventDefault(); els.analyzeBtn.click(); }});
 
             els.sendBtn.onclick = () => {
                 if(!els.amount.value) { showToast('金額を入力', 'error'); els.amount.focus(); return; }
@@ -990,6 +443,36 @@
                 if(win) window.close(); else location.href = url;
             };
 
+            const updateLink = () => {
+                const base = localStorage.getItem(KEYS.base)||DEFAULTS.baseUrl;
+                const p = new URLSearchParams();
+                const getVal = (k, def) => localStorage.getItem(KEYS[k])||def;
+                
+                const amt = els.amount.value;
+                if(amt) p.append(getVal('amount', DEFAULTS.amountId), amt);
+                p.append(getVal('category', DEFAULTS.categoryId), document.querySelector('input[name="category"]:checked').value);
+                p.append(getVal('payment', DEFAULTS.paymentId), document.querySelector('input[name="payment"]:checked').value);
+                p.append(getVal('date', DEFAULTS.dateId), els.date.value);
+                if(els.memo.value) p.append(getVal('memo', DEFAULTS.memoId), els.memo.value);
+                els.fallbackLink.href = `${base}${base.includes('?')?'&':'?'}${p.toString()}`;
+            };
+
+            const loadSettings = () => {
+                const set = (el, k, def) => { if(el) el.value = localStorage.getItem(KEYS[k])||def || ''; };
+                set(els.settings.base, 'base', DEFAULTS.baseUrl); set(els.settings.amount, 'amount', DEFAULTS.amountId);
+                set(els.settings.payment, 'payment', DEFAULTS.paymentId); set(els.settings.date, 'date', DEFAULTS.dateId);
+                set(els.settings.category, 'category', DEFAULTS.categoryId); set(els.settings.memo, 'memo', DEFAULTS.memoId);
+                set(els.settings.apiKey, 'apiKey', '');
+            };
+
+            Object.keys(els.settings).forEach(k => { 
+                if(els.settings[k]) els.settings[k].addEventListener('input', e => {
+                    const storeKey = k === 'apiKey' ? 'apiKey' : k.replace('setting-entry-','').replace('setting-base-url','base');
+                    autoSave(KEYS[storeKey], e.target.value);
+                }); 
+            });
+
+            const initDate = () => { const d=new Date(); els.date.value=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
             initDate(); loadSettings(); updateLink();
             setTimeout(() => els.amount.focus(), 300);
         });
