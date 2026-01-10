@@ -7,18 +7,16 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     
-    <!-- エラー検出用: 万が一エラーが出たらアラートで知らせる -->
+    <!-- エラー検出用: 万が一動かない場合に理由を表示 -->
     <script>
         window.onerror = function(message, source, lineno, colno, error) {
-            console.error(error);
-            // 致命的なエラーのみアラート (鬱陶しいのでコメントアウト解除で有効化)
-            // alert('エラー: ' + message); 
+            alert('システムエラー: ' + message);
         };
     </script>
 
     <style>
         * { -webkit-tap-highlight-color: transparent; }
-        body { font-family: sans-serif; touch-action: manipulation; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; touch-action: manipulation; }
         input[type=number]::-webkit-inner-spin-button, 
         input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         
@@ -32,7 +30,7 @@
             box-shadow: inset 0 0 0 2px #22c55e; font-weight: bold;
         }
 
-        /* トースト通知 */
+        /* アニメーション */
         .saved-toast {
             position: fixed; top: 1rem; left: 50%; transform: translateX(-50%);
             animation: fadeInOut 3s forwards; z-index: 9999;
@@ -56,7 +54,7 @@
         }
         .compact-item i { font-size: 18px; margin-bottom: 2px; }
 
-        /* AIボタンアニメーション */
+        /* AIアニメーション */
         .ai-thinking {
             background: linear-gradient(270deg, #6366f1, #a855f7, #ec4899);
             background-size: 600% 600%; animation: ai-gradient 3s ease infinite;
@@ -116,14 +114,17 @@
                     <textarea id="ai-input-text" class="w-full p-3 border-2 border-indigo-100 rounded-xl h-32 text-lg focus:border-indigo-500 outline-none" placeholder="例：昨日コンビニで1200円"></textarea>
                     
                     <div class="absolute bottom-2 right-2 flex gap-2">
+                        <!-- アルバム -->
                         <label class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-green-600 cursor-pointer border border-green-200">
                             <i class="fas fa-image"></i>
                             <input type="file" id="album-input" accept="image/*" class="hidden">
                         </label>
+                        <!-- カメラ -->
                         <label class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 cursor-pointer border border-blue-200">
                             <i class="fas fa-camera"></i>
                             <input type="file" id="camera-input" accept="image/*" capture="environment" class="hidden">
                         </label>
+                        <!-- マイク -->
                         <button id="mic-btn" class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-600 border border-gray-200">
                             <i class="fas fa-microphone"></i>
                         </button>
@@ -167,7 +168,7 @@
 
     <!-- メインエリア -->
     <div class="flex-1 p-2 flex flex-col gap-2 overflow-y-auto">
-        <!-- 費目 -->
+        <!-- 費目 (HTML直書きで確実に表示) -->
         <div>
             <div class="text-[10px] font-bold text-gray-500 mb-1 ml-1">カテゴリー</div>
             <div class="compact-grid" id="category-container">
@@ -182,7 +183,7 @@
             </div>
         </div>
 
-        <!-- 支払 -->
+        <!-- 支払 (HTML直書きで確実に表示) -->
         <div>
             <div class="text-[10px] font-bold text-gray-500 mb-1 ml-1">支払い方法</div>
             <div class="compact-grid" id="payment-container">
@@ -204,7 +205,9 @@
                 <input type="text" id="input-memo" class="w-full h-12 pl-10 pr-4 rounded-xl border border-gray-300 font-bold text-gray-700 outline-none focus:border-indigo-500" placeholder="備考">
             </div>
             
+            <!-- 隠しリンク -->
             <a id="hidden-link" href="#" target="_blank" style="display:none;"></a>
+
             <button id="send-btn" class="w-full h-14 bg-slate-800 text-white font-bold rounded-xl shadow-lg flex items-center justify-center gap-2 text-xl active:scale-95 transition">
                 送信する <i class="fas fa-paper-plane"></i>
             </button>
@@ -222,79 +225,66 @@
                     },
                     storageKey: 'budget_2026_data'
                 };
-                const PREFIX = 'budget_2026_';
-                const KEYS = { base: PREFIX+'baseUrl', amount: PREFIX+'entryAmount', payment: PREFIX+'entryPayment', date: PREFIX+'entryDate', category: PREFIX+'entryCategory', memo: PREFIX+'entryMemo', apiKey: PREFIX+'apiKey' };
-
-                // Toast関数
-                const showToast = (msg, type='success') => {
-                    const container = document.getElementById('toast-container');
-                    const toast = document.createElement('div');
-                    toast.className = `saved-toast ${type==='success'?'bg-slate-800':'bg-red-600'} text-white px-4 py-2 rounded-full shadow-lg text-xs font-bold flex items-center gap-2`;
-                    toast.innerHTML = `<i class="fas ${type==='success'?'fa-check':'fa-exclamation'}"></i> ${msg}`;
-                    container.appendChild(toast); 
-                    setTimeout(() => toast.remove(), 2000);
-                };
-
+                
                 // 要素取得
                 const els = {
-                    modal: document.getElementById('settings-modal'),
-                    aiModal: document.getElementById('ai-modal'),
-                    openBtn: document.getElementById('open-settings'),
-                    closeBtn: document.getElementById('close-settings'),
-                    openAiBtn: document.getElementById('open-ai'),
-                    closeAiBtn: document.getElementById('close-ai'),
-                    analyzeBtn: document.getElementById('ai-analyze-btn'),
-                    analyzeSendBtn: document.getElementById('ai-analyze-send-btn'),
-                    sendBtn: document.getElementById('send-btn'),
-                    amount: document.getElementById('input-amount'),
-                    date: document.getElementById('input-date'),
-                    memo: document.getElementById('input-memo'),
-                    aiInput: document.getElementById('ai-input-text'),
-                    micBtn: document.getElementById('mic-btn'),
-                    cameraInput: document.getElementById('camera-input'),
-                    albumInput: document.getElementById('album-input'),
+                    modal: document.getElementById('settings-modal'), aiModal: document.getElementById('ai-modal'),
+                    openBtn: document.getElementById('open-settings'), closeBtn: document.getElementById('close-settings'),
+                    openAiBtn: document.getElementById('open-ai'), closeAiBtn: document.getElementById('close-ai'),
+                    analyzeBtn: document.getElementById('ai-analyze-btn'), analyzeSendBtn: document.getElementById('ai-analyze-send-btn'),
+                    sendBtn: document.getElementById('send-btn'), amount: document.getElementById('input-amount'),
+                    date: document.getElementById('input-date'), memo: document.getElementById('input-memo'),
+                    aiInput: document.getElementById('ai-input-text'), micBtn: document.getElementById('mic-btn'),
+                    cameraInput: document.getElementById('camera-input'), albumInput: document.getElementById('album-input'),
                     hiddenLink: document.getElementById('hidden-link'),
-                    
-                    // 設定Inputs
-                    sApiKey: document.getElementById('setting-api-key'),
-                    sBaseUrl: document.getElementById('setting-base-url'),
-                    sAmt: document.getElementById('setting-entry-amount'),
-                    sCat: document.getElementById('setting-entry-category'),
-                    sPay: document.getElementById('setting-entry-payment'),
-                    sDate: document.getElementById('setting-entry-date'),
+                    // Settings Inputs
+                    sApiKey: document.getElementById('setting-api-key'), sBaseUrl: document.getElementById('setting-base-url'),
+                    sAmt: document.getElementById('setting-entry-amount'), sCat: document.getElementById('setting-entry-category'),
+                    sPay: document.getElementById('setting-entry-payment'), sDate: document.getElementById('setting-entry-date'),
                     sMemo: document.getElementById('setting-entry-memo')
                 };
 
-                // URL生成・リンク更新関数 (※ここが前回抜けていました※)
-                const updateLink = () => {
-                    // 基本的には送信ボタンのロジックで動くため、fallbackLinkがない場合は何もしない
-                    // 以前のコードとの互換性のため定義だけ残しておくか、空にしておく
+                // トースト表示
+                const showToast = (msg) => {
+                    const div = document.createElement('div');
+                    div.className = 'saved-toast bg-slate-800 text-white px-4 py-2 rounded-full shadow-lg text-xs font-bold flex items-center gap-2';
+                    div.innerHTML = `<i class="fas fa-check"></i> ${msg}`;
+                    document.getElementById('toast-container').appendChild(div);
+                    setTimeout(() => div.remove(), 3000);
                 };
 
-                const autoSave = (key, value) => { localStorage.setItem(key, value.trim()); };
-
-                // 初期化
-                const today = new Date().toISOString().split('T')[0];
-                els.date.value = today;
+                // 設定読み込み・保存
+                const loadSettings = () => {
+                    const cfg = JSON.parse(localStorage.getItem(CONFIG.storageKey) || '{}');
+                    els.sBaseUrl.value = cfg.baseUrl || CONFIG.baseUrl;
+                    els.sApiKey.value = cfg.apiKey || '';
+                    els.sAmt.value = cfg.amount || CONFIG.ids.amount;
+                    els.sCat.value = cfg.category || CONFIG.ids.category;
+                    els.sPay.value = cfg.payment || CONFIG.ids.payment;
+                    els.sDate.value = cfg.date || CONFIG.ids.date;
+                    els.sMemo.value = cfg.memo || CONFIG.ids.memo;
+                };
                 
-                // 設定読み込み
-                const savedConfig = JSON.parse(localStorage.getItem(CONFIG.storageKey) || '{}');
-                els.sBaseUrl.value = savedConfig.baseUrl || CONFIG.baseUrl;
-                els.sApiKey.value = savedConfig.apiKey || '';
-                els.sAmt.value = savedConfig.amount || CONFIG.ids.amount;
-                els.sCat.value = savedConfig.category || CONFIG.ids.category;
-                els.sPay.value = savedConfig.payment || CONFIG.ids.payment;
-                els.sDate.value = savedConfig.date || CONFIG.ids.date;
-                els.sMemo.value = savedConfig.memo || CONFIG.ids.memo;
-
-                // 設定保存
                 const saveSettings = () => {
                     const data = {
-                        baseUrl: els.sBaseUrl.value,
-                        apiKey: els.sApiKey.value,
-                        amount: els.sAmt.value,
-                        category: els.sCat.value,
-                        payment: els.sPay.value,
-                        date: els.sDate.value,
-                        memo: els.sMemo.value
-        
+                        baseUrl: els.sBaseUrl.value, apiKey: els.sApiKey.value,
+                        amount: els.sAmt.value, category: els.sCat.value, payment: els.sPay.value,
+                        date: els.sDate.value, memo: els.sMemo.value
+                    };
+                    localStorage.setItem(CONFIG.storageKey, JSON.stringify(data));
+                };
+
+                [els.sApiKey, els.sAmt, els.sCat, els.sPay, els.sDate, els.sMemo].forEach(el => el.addEventListener('input', saveSettings));
+
+                // URL生成
+                const generateUrl = () => {
+                    const cfg = JSON.parse(localStorage.getItem(CONFIG.storageKey) || '{}');
+                    const baseUrl = cfg.baseUrl || CONFIG.baseUrl;
+                    const ids = {
+                        amount: cfg.amount || CONFIG.ids.amount, category: cfg.category || CONFIG.ids.category,
+                        payment: cfg.payment || CONFIG.ids.payment, date: cfg.date || CONFIG.ids.date, memo: cfg.memo || CONFIG.ids.memo
+                    };
+
+                    const cat = document.querySelector('input[name="category"]:checked')?.value || '';
+                    const pay = document.querySelector('input[name="payment"]:checked')?.value || '';
+                    const p = new URLSearc
