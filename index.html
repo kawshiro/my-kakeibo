@@ -7,10 +7,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     
-    <!-- エラー検出用スクリプト (最優先読み込み) -->
+    <!-- エラー検出用スクリプト -->
     <script>
         window.onerror = function(message, source, lineno, colno, error) {
-            alert('エラーが発生しました:\n' + message);
+            // alert('エラーが発生しました:\n' + message); // 安定したらコメントアウトしてもOK
         };
     </script>
 
@@ -105,7 +105,7 @@
     <div id="ai-modal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg flex flex-col max-h-[85vh]">
             <div class="p-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white flex justify-between items-center shrink-0 rounded-t-2xl">
-                <h2 class="font-bold"><i class="fas fa-sparkles text-yellow-300"></i> AI入力</h2>
+                <h2 class="font-bold text-lg"><i class="fas fa-sparkles text-yellow-300"></i> AI入力</h2>
                 <button id="close-ai" class="text-white hover:bg-white/20 rounded-full w-8 h-8"><i class="fas fa-times"></i></button>
             </div>
             <div class="p-4 flex-1 flex flex-col gap-3 overflow-y-auto">
@@ -129,8 +129,8 @@
                 </div>
                 
                 <div class="grid grid-cols-2 gap-2 shrink-0">
-                    <button id="ai-analyze-btn" class="bg-indigo-600 text-white font-bold py-3 rounded-xl shadow">解析のみ</button>
-                    <button id="ai-analyze-send-btn" class="bg-gradient-to-r from-pink-500 to-rose-500 text-white font-bold py-3 rounded-xl shadow">解析＆送信</button>
+                    <button id="ai-analyze-btn" class="bg-indigo-600 text-white font-bold py-3 rounded-xl shadow active:scale-95 transition">解析のみ</button>
+                    <button id="ai-analyze-send-btn" class="bg-gradient-to-r from-pink-500 to-rose-500 text-white font-bold py-3 rounded-xl shadow active:scale-95 transition">解析＆送信</button>
                 </div>
             </div>
         </div>
@@ -141,16 +141,17 @@
 
     <!-- ヘッダー -->
     <div class="bg-gradient-to-r from-indigo-600 to-blue-600 p-2 text-white shadow-md z-30 shrink-0">
-        <div class="flex justify-between items-center mb-1">
-            <input type="date" id="input-date" class="bg-white/20 text-white font-bold text-sm rounded px-2 py-1 border-none outline-none w-32">
+        <div class="flex justify-between items-center mb-1 gap-2">
+            <input type="date" id="input-date" class="bg-white/20 text-white font-bold text-sm rounded px-2 py-1 border-none outline-none w-32 h-10">
             
-            <div class="flex gap-2">
-                <!-- AIボタン -->
-                <button id="open-ai" class="bg-gradient-to-br from-fuchsia-500 to-violet-600 text-white px-3 py-1.5 rounded-full shadow border border-white/30 flex items-center gap-1 active:scale-95 transition">
-                    <i class="fas fa-sparkles text-xs"></i> <span class="text-xs font-bold">AI</span>
+            <div class="flex gap-2 items-center flex-1 justify-end">
+                <!-- AIボタン: 大型化＆強調 -->
+                <button id="open-ai" class="bg-gradient-to-br from-fuchsia-500 to-violet-600 text-white h-10 px-5 rounded-full shadow-lg border border-white/30 flex items-center gap-2 active:scale-95 transition transform hover:scale-105">
+                    <i class="fas fa-sparkles text-lg animate-pulse text-yellow-300"></i> <span class="font-bold text-base tracking-wide">AI入力</span>
                 </button>
+                
                 <!-- 設定ボタン -->
-                <button id="open-settings" class="w-8 h-8 flex items-center justify-center opacity-80 hover:opacity-100">
+                <button id="open-settings" class="w-10 h-10 flex items-center justify-center opacity-80 hover:opacity-100">
                     <i class="fas fa-cog text-xl"></i>
                 </button>
             </div>
@@ -386,108 +387,4 @@
                     Extract: amount(int), category(string), payment(string), date(YYYY-MM-DD), memo(string).
                     Categories: ${CATEGORIES.map(c=>c.val).join(',')}.
                     Payments: ${PAYMENTS.map(p=>p.val).join(',')}.
-                    Input: "${text}".
-                    JSON only.
-                `;
-
-                const parts = [{ text: prompt }];
-                if(imageBase64) parts.push({ inlineData: { mimeType: mimeType, data: imageBase64 } });
-
-                try {
-                    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            contents: [{ parts: parts }],
-                            generationConfig: { responseMimeType: "application/json" }
-                        })
-                    });
-                    
-                    const data = await res.json();
-                    if(data.error) throw new Error(data.error.message);
-                    
-                    const result = JSON.parse(data.candidates[0].content.parts[0].text);
-                    
-                    if(result.amount) els.amount.value = result.amount;
-                    if(result.date) els.date.value = result.date;
-                    if(result.memo) els.memo.value = result.memo;
-                    if(result.category) {
-                        const r = document.querySelector(`input[name="category"][value="${result.category}"]`);
-                        if(r) r.checked = true;
-                    }
-                    if(result.payment) {
-                        const r = document.querySelector(`input[name="payment"][value="${result.payment}"]`);
-                        if(r) r.checked = true;
-                    }
-
-                    showToast('解析完了！');
-                    els.aiModal.classList.add('hidden');
-                    els.aiInput.value = '';
-                    
-                    if(autoSend) setTimeout(() => els.sendBtn.click(), 500);
-
-                } catch(e) {
-                    alert('AIエラー: ' + e.message);
-                } finally {
-                    btn.innerText = originalText;
-                    btn.classList.remove('ai-thinking');
-                }
-            };
-
-            els.analyzeBtn.onclick = () => callGemini(els.aiInput.value, null, null, false);
-            els.analyzeSendBtn.onclick = () => callGemini(els.aiInput.value, null, null, true);
-
-            // 画像処理
-            const handleImage = (e) => {
-                const file = e.target.files[0];
-                if(!file) return;
-                const reader = new FileReader();
-                reader.onload = (re) => {
-                    const base64 = re.target.result.split(',')[1];
-                    callGemini("この画像を解析して", base64, file.type, false);
-                };
-                reader.readAsDataURL(file);
-                e.target.value = ''; // リセット
-            };
-            els.cameraInput.onchange = handleImage;
-            els.albumInput.onchange = handleImage;
-
-            // 音声処理
-            if(window.SpeechRecognition || window.webkitSpeechRecognition) {
-                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-                const recognition = new SpeechRecognition();
-                recognition.lang = 'ja-JP';
-                recognition.continuous = true;
-                
-                els.micBtn.onclick = () => {
-                    if(els.micBtn.classList.contains('mic-listening')) recognition.stop();
-                    else recognition.start();
-                };
-                
-                recognition.onstart = () => els.micBtn.classList.add('mic-listening');
-                recognition.onend = () => els.micBtn.classList.remove('mic-listening');
-                recognition.onresult = (e) => {
-                    const t = e.results[e.results.length-1][0].transcript;
-                    els.aiInput.value += t;
-                };
-            } else {
-                els.micBtn.style.display = 'none';
-            }
-
-            // システム準備完了トースト
-            showToast('システム準備完了', 'success');
-        });
-
-        // トースト表示関数
-        function showToast(msg) {
-            const div = document.createElement('div');
-            div.className = 'saved-toast bg-slate-800 text-white px-4 py-2 rounded-full shadow-lg text-xs font-bold flex items-center gap-2';
-            div.innerHTML = `<i class="fas fa-check"></i> ${msg}`;
-            document.body.appendChild(div);
-            setTimeout(() => div.remove(), 3000);
-        }
-    </script>
-</body>
-</html>
-
-
+      
