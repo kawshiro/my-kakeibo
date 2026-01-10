@@ -4,20 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>AI家計簿入力 2026</title>
+    
+    <!-- スタイル・アイコン -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     
+    <!-- エラーハンドリング（動かない場合にエラーを表示） -->
+    <script>
+        window.onerror = function(msg, url, line, col, error) {
+            const div = document.createElement('div');
+            div.style.cssText = 'position:fixed;top:0;left:0;width:100%;background:red;color:white;padding:10px;z-index:9999;font-size:12px;';
+            div.innerText = 'システムエラー: ' + msg + ' (Line: ' + line + ')';
+            document.body.appendChild(div);
+            return false;
+        };
+    </script>
+
     <script>
         tailwind.config = {
             theme: {
                 extend: {
-                    colors: {
-                        primary: '#4f46e5',
-                        secondary: '#ec4899',
-                    },
-                    animation: {
-                        'bounce-slight': 'bounce-slight 2s infinite',
-                    },
+                    colors: { primary: '#4f46e5', secondary: '#ec4899' },
+                    animation: { 'bounce-slight': 'bounce-slight 2s infinite' },
                     keyframes: {
                         'bounce-slight': {
                             '0%, 100%': { transform: 'translateY(0)' },
@@ -32,90 +40,31 @@
     <style>
         * { -webkit-tap-highlight-color: transparent; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; touch-action: manipulation; }
+        input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         
-        /* 数値入力のスピンボタン非表示 */
-        input[type=number]::-webkit-inner-spin-button, 
-        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-        
-        /* ラジオボタンのカスタムスタイル */
-        .category-radio:checked + div {
-            background-color: #eff6ff; border-color: #3b82f6; color: #1d4ed8;
-            box-shadow: inset 0 0 0 2px #3b82f6; font-weight: bold;
-        }
-        .payment-radio:checked + div {
-            background-color: #f0fdf4; border-color: #22c55e; color: #15803d;
-            box-shadow: inset 0 0 0 2px #22c55e; font-weight: bold;
-        }
+        .category-radio:checked + div { background-color: #eff6ff; border-color: #3b82f6; color: #1d4ed8; box-shadow: inset 0 0 0 2px #3b82f6; font-weight: bold; }
+        .payment-radio:checked + div { background-color: #f0fdf4; border-color: #22c55e; color: #15803d; box-shadow: inset 0 0 0 2px #22c55e; font-weight: bold; }
 
-        /* アニメーション */
         .toast-enter { animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
         .toast-exit { animation: fadeOut 0.3s forwards; }
-        
-        @keyframes slideDown {
-            from { transform: translate(-50%, -100%); opacity: 0; }
-            to { transform: translate(-50%, 0); opacity: 1; }
-        }
-        @keyframes fadeOut {
-            to { opacity: 0; }
-        }
+        @keyframes slideDown { from { transform: translate(-50%, -100%); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
+        @keyframes fadeOut { to { opacity: 0; } }
 
-        /* グリッドレイアウト */
-        .compact-grid {
-            display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;
-        }
-        .compact-item {
-            height: 64px; display: flex; flex-direction: column; 
-            align-items: center; justify-content: center;
-            border-radius: 12px; border: 1px solid #e5e7eb; 
-            font-size: 11px; line-height: 1.2; background: white;
-            transition: all 0.2s;
-        }
+        .compact-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+        .compact-item { height: 64px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 12px; border: 1px solid #e5e7eb; font-size: 11px; line-height: 1.2; background: white; transition: all 0.2s; }
         .compact-item i { font-size: 20px; margin-bottom: 4px; }
         .compact-item:active { transform: scale(0.95); }
 
-        /* ローディングアニメーション */
-        .loader {
-            border: 3px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border-top: 3px solid #ffffff;
-            width: 20px; height: 20px;
-            animation: spin 1s linear infinite;
-        }
+        .loader { border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top: 3px solid #ffffff; width: 20px; height: 20px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* マイク・録音中 */
-        .mic-listening {
-            background-color: #ef4444 !important; color: white !important;
-            animation: pulse 1.5s infinite;
-            border-color: #ef4444 !important;
-        }
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
-        }
+        .mic-listening { background-color: #ef4444 !important; color: white !important; animation: pulse 1.5s infinite; border-color: #ef4444 !important; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
 
-        /* カメラモーダル用 */
-        #camera-video {
-            transform: scaleX(1); /* 背面カメラ想定なので反転しない */
-        }
+        #camera-video { transform: scaleX(1); }
 
-        /* Gemini風グラデーションボタン */
-        .gemini-btn {
-            background: linear-gradient(135deg, #4b90ff 0%, #ff5546 100%);
-            position: relative;
-            z-index: 1;
-            overflow: hidden;
-        }
-        .gemini-btn::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: linear-gradient(135deg, #4b90ff 0%, #ff5546 100%);
-            z-index: -1;
-            filter: blur(8px);
-            opacity: 0.7;
-        }
+        .gemini-btn { background: linear-gradient(135deg, #4b90ff 0%, #ff5546 100%); position: relative; z-index: 1; overflow: hidden; }
+        .gemini-btn::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, #4b90ff 0%, #ff5546 100%); z-index: -1; filter: blur(8px); opacity: 0.7; }
     </style>
 </head>
 <body class="bg-gray-50 h-[100dvh] overflow-hidden text-gray-800 flex flex-col">
@@ -131,20 +80,19 @@
                 <div class="bg-indigo-50 p-3 rounded-lg border border-indigo-100">
                     <label class="block text-xs font-bold text-indigo-700 mb-1">Gemini APIキー (必須)</label>
                     <input type="password" id="setting-api-key" placeholder="AIを使う場合はここに入力" class="w-full p-2 border border-indigo-200 rounded font-mono text-sm bg-white focus:ring-2 focus:ring-indigo-500 outline-none">
-                    <p class="text-[10px] text-indigo-500 mt-1">※ レシート解析やテキスト入力の自動化に必要です</p>
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-gray-600 mb-1">Googleフォーム URL</label>
-                    <input type="text" id="setting-base-url" class="w-full p-2 border rounded text-xs text-gray-600 bg-gray-50 font-mono" placeholder="https://docs.google.com/forms/..." value="https://docs.google.com/forms/d/e/1FAIpQLSdyfO5WEIVhLXzE9o7R29heMt6w5Pvf-iEgfZFPztJChzzO_Q/viewform">
+                    <input type="text" id="setting-base-url" class="w-full p-2 border rounded text-xs text-gray-600 bg-gray-50 font-mono" value="https://docs.google.com/forms/d/e/1FAIpQLSdyfO5WEIVhLXzE9o7R29heMt6w5Pvf-iEgfZFPztJChzzO_Q/viewform">
                 </div>
                 <div class="pt-2 border-t border-dashed">
-                    <p class="text-xs font-bold mb-2 text-gray-600">GoogleフォームのエントリーID (entry.xxxx)</p>
+                    <p class="text-xs font-bold mb-2 text-gray-600">GoogleフォームのエントリーID</p>
                     <div class="grid gap-3">
-                        <div><label class="text-[10px] text-gray-500">金額 ID</label><input type="text" id="setting-entry-amount" class="w-full p-2 border rounded text-xs font-mono" placeholder="entry.319120210"></div>
-                        <div><label class="text-[10px] text-gray-500">費目 ID</label><input type="text" id="setting-entry-category" class="w-full p-2 border rounded text-xs font-mono" placeholder="entry.1341647002"></div>
-                        <div><label class="text-[10px] text-gray-500">支払方法 ID</label><input type="text" id="setting-entry-payment" class="w-full p-2 border rounded text-xs font-mono" placeholder="entry.594957767"></div>
-                        <div><label class="text-[10px] text-gray-500">日付 ID</label><input type="text" id="setting-entry-date" class="w-full p-2 border rounded text-xs font-mono" placeholder="entry.217676147"></div>
-                        <div><label class="text-[10px] text-gray-500">備考 ID</label><input type="text" id="setting-entry-memo" class="w-full p-2 border rounded text-xs font-mono" placeholder="entry.1139655263"></div>
+                        <div><label class="text-[10px] text-gray-500">金額 ID</label><input type="text" id="setting-entry-amount" class="w-full p-2 border rounded text-xs font-mono" value="entry.319120210"></div>
+                        <div><label class="text-[10px] text-gray-500">費目 ID</label><input type="text" id="setting-entry-category" class="w-full p-2 border rounded text-xs font-mono" value="entry.1341647002"></div>
+                        <div><label class="text-[10px] text-gray-500">支払方法 ID</label><input type="text" id="setting-entry-payment" class="w-full p-2 border rounded text-xs font-mono" value="entry.594957767"></div>
+                        <div><label class="text-[10px] text-gray-500">日付 ID</label><input type="text" id="setting-entry-date" class="w-full p-2 border rounded text-xs font-mono" value="entry.217676147"></div>
+                        <div><label class="text-[10px] text-gray-500">備考 ID</label><input type="text" id="setting-entry-memo" class="w-full p-2 border rounded text-xs font-mono" value="entry.1139655263"></div>
                     </div>
                 </div>
             </div>
@@ -182,24 +130,22 @@
                 <div class="relative group">
                     <textarea id="ai-input-text" class="w-full p-3 pb-12 border-2 border-indigo-100 rounded-xl h-36 text-lg focus:border-indigo-500 outline-none resize-none transition-colors" placeholder="例：スーパーで食材 3500円 カード払い"></textarea>
                     
-                    <!-- メディアコントロール -->
                     <div class="absolute bottom-2 right-2 flex gap-2">
-                        <!-- 画像プレビュー (最初は非表示) -->
+                        <!-- 画像プレビュー -->
                         <div id="image-preview-area" class="hidden relative w-10 h-10 rounded overflow-hidden border border-gray-300 group">
                             <img id="image-preview" class="w-full h-full object-cover">
                             <button id="clear-image" class="absolute inset-0 bg-black/50 text-white text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><i class="fas fa-trash"></i></button>
                         </div>
-
-                        <!-- アルバムから選択 -->
+                        <!-- アルバム -->
                         <label class="w-10 h-10 bg-green-50 hover:bg-green-100 rounded-full flex items-center justify-center text-green-600 cursor-pointer border border-green-200 transition-colors shadow-sm" title="画像をアップロード">
                             <i class="fas fa-image"></i>
                             <input type="file" id="album-input" accept="image/*" class="hidden">
                         </label>
-                        <!-- Webカメラ起動 -->
+                        <!-- Webカメラ -->
                         <button id="start-camera-btn" class="w-10 h-10 bg-blue-50 hover:bg-blue-100 rounded-full flex items-center justify-center text-blue-600 cursor-pointer border border-blue-200 transition-colors shadow-sm" title="カメラを起動">
                             <i class="fas fa-camera"></i>
                         </button>
-                        <!-- 音声入力 -->
+                        <!-- マイク -->
                         <button id="mic-btn" class="w-10 h-10 bg-gray-50 hover:bg-gray-100 rounded-full flex items-center justify-center text-gray-600 border border-gray-200 transition-colors shadow-sm" title="音声入力">
                             <i class="fas fa-microphone"></i>
                         </button>
@@ -209,13 +155,8 @@
                 <div id="ai-status" class="text-xs text-center min-h-[1.5em] font-bold text-indigo-600"></div>
                 
                 <div class="grid grid-cols-2 gap-3 shrink-0 mt-auto">
-                    <button id="ai-analyze-btn" class="bg-white border-2 border-indigo-600 text-indigo-600 font-bold py-3 rounded-xl shadow-sm active:scale-95 transition hover:bg-indigo-50">
-                        入力のみ反映
-                    </button>
-                    <button id="ai-analyze-send-btn" class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold py-3 rounded-xl shadow-md active:scale-95 transition hover:shadow-lg flex items-center justify-center gap-2">
-                        <span>解析して送信</span>
-                        <i class="fas fa-paper-plane text-sm"></i>
-                    </button>
+                    <button id="ai-analyze-btn" class="bg-white border-2 border-indigo-600 text-indigo-600 font-bold py-3 rounded-xl shadow-sm active:scale-95 transition hover:bg-indigo-50">入力のみ反映</button>
+                    <button id="ai-analyze-send-btn" class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold py-3 rounded-xl shadow-md active:scale-95 transition hover:shadow-lg flex items-center justify-center gap-2"><span>解析して送信</span><i class="fas fa-paper-plane text-sm"></i></button>
                 </div>
             </div>
         </div>
@@ -224,7 +165,7 @@
     <!-- 通知エリア -->
     <div id="toast-container" class="fixed top-4 left-0 w-full flex justify-center z-[100] pointer-events-none"></div>
 
-    <!-- ヘッダー / 表示エリア -->
+    <!-- ヘッダー -->
     <div class="bg-gradient-to-br from-indigo-600 to-blue-700 p-4 text-white shadow-lg z-30 shrink-0">
         <div class="flex justify-between items-start mb-4">
             <input type="date" id="input-date" class="bg-white/10 backdrop-blur text-white font-bold text-sm rounded-lg px-3 py-1.5 border border-white/20 outline-none focus:bg-white/20 transition-colors cursor-pointer">
@@ -245,7 +186,7 @@
     <!-- メイン入力エリア -->
     <div class="flex-1 p-3 pb-24 flex flex-col gap-4 overflow-y-auto bg-gray-50">
         
-        <!-- カテゴリー選択 -->
+        <!-- カテゴリー -->
         <div class="bg-white p-3 rounded-2xl shadow-sm border border-gray-100">
             <div class="text-xs font-bold text-gray-500 mb-2 ml-1 flex items-center gap-1"><i class="fas fa-tag"></i> カテゴリー</div>
             <div class="compact-grid" id="category-container">
@@ -260,7 +201,7 @@
             </div>
         </div>
 
-        <!-- 支払い方法選択 -->
+        <!-- 支払い方法 -->
         <div class="bg-white p-3 rounded-2xl shadow-sm border border-gray-100">
             <div class="text-xs font-bold text-gray-500 mb-2 ml-1 flex items-center gap-1"><i class="fas fa-wallet"></i> 支払い方法</div>
             <div class="compact-grid" id="payment-container">
@@ -281,16 +222,28 @@
                 <i class="fas fa-pen absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
                 <input type="text" id="input-memo" class="w-full h-12 pl-10 pr-4 rounded-xl border border-gray-300 bg-white font-medium text-gray-700 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all shadow-sm" placeholder="メモ (任意)">
             </div>
-            
             <button id="send-btn" class="w-full h-14 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl shadow-lg flex items-center justify-center gap-3 text-lg active:scale-95 transition-all">
-                <span>記録する</span>
-                <i class="fas fa-chevron-right text-sm opacity-70"></i>
+                <span>記録する</span><i class="fas fa-chevron-right text-sm opacity-70"></i>
             </button>
         </div>
     </div>
 
-    <!-- Gemini AI FAB (右下フローティングボタン) -->
+    <!-- Gemini AI FAB -->
     <button id="open-ai" class="fixed bottom-6 right-6 w-16 h-16 rounded-full gemini-btn text-white shadow-2xl flex items-center justify-center animate-bounce-slight active:scale-90 transition-transform z-40 group">
-        <!-- SVG Icon: Sparkles (Visible) -->
+        <!-- SVG Icon (キラキラ) -->
         <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" class="w-8 h-8 group-hover:rotate-12 transition-transform">
-            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" display="none" /> <!--
+            <path d="M12 2L9.17 8.17 3 11l6.17 2.83L12 20l2.83-6.17L21 11l-6.17-2.83z" stroke="none"/>
+            <path d="M5 2l1.33 2.67L9 6l-2.67 1.33L5 10 3.67 7.33 1 6l2.67-1.33z" stroke="none" class="opacity-70"/>
+            <path d="M19 16l-1.33 2.67L15 20l2.67 1.33L19 24l1.33-2.67L23 20l-2.67-1.33z" stroke="none" class="opacity-70"/>
+        </svg>
+    </button>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                // 設定と定数
+                const CONFIG = {
+                    storageKey: 'budget_2026_config',
+                    defaults: {
+                        baseUrl: 'https://docs.google.com/forms/d/e/1FAIpQLSdyfO5WEIVhLXzE9o7R29heMt6w5Pvf-iEgfZFPztJChzzO_Q/viewform',
+                        ids: { amount: 'entry.319120210', category: 'entry.1341647002', payment: 'entry.594957767', date: 'entry.217676147', memo: 'entry.11396552
