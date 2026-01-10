@@ -254,6 +254,15 @@
                 get('btn-analyze-send').onclick = () => runAI(true);
                 get('btn-send').onclick = sendForm;
                 
+                // メモ欄でEnterキー送信
+                get('inp-memo').onkeydown = (e) => {
+                    if (e.key === 'Enter' && !e.isComposing) {
+                        e.preventDefault();
+                        sendForm();
+                        get('inp-memo').blur();
+                    }
+                };
+                
                 initSpeechRecognition();
                 get('btn-mic').onclick = toggleSpeech;
 
