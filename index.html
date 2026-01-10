@@ -339,4 +339,158 @@
             async function startCamera() {
                 try {
                     const constraints = { video: { facingMode: 'environment' } };
-                    stream = await navigator.med
+                    stream = await navigator.mediaDevices.getUserMedia(constraints);
+                    get('camera-video').srcObject = stream;
+                    get('camera-modal').classList.remove('hidden');
+                } catch (err) {
+                    alert('カメラエラー: ' + err.message);
+                }
+            }
+
+            function stopCamera() {
+                if(stream) stream.getTracks().forEach(t => t.stop());
+                get('camera-modal').classList.add('hidden');
+            }
+
+            function takePhoto() {
+                const video = get('camera-video');
+                const canvas = document.createElement('canvas');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                canvas.getContext('2d').drawImage(video, 0, 0);
+                const data = canvas.toDataURL('image/jpeg', 0.8);
+                const img = new Image();
+                img.src = data;
+                img.onload = () => {
+                    const c2 = document.createElement('canvas');
+                    const max = 800;
+                    let w = img.width, h = img.height;
+                    if (w > h) { if (w > max) { h *= max/w; w = max; } }
+                    else { if (h > max) { w *= max/h; h = max; } }
+                    c2.width = w; c2.height = h;
+                    c2.getContext('2d').drawImage(img, 0, 0, w, h);
+                    setImage(c2.toDataURL('image/jpeg', 0.8));
+                    stopCamera();
+                };
+            }
+
+            function processFile(file) {
+                if(!file) return;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.src = e.target.result;
+                    img.onload = () => {
+                        const c = document.createElement('canvas');
+                        const max = 800;
+                        let w = img.width, h = img.height;
+                        if (w > h) { if (w > max) { h *= max/w; w = max; } }
+                        else { if (h > max) { w *= max/h; h = max; } }
+                        c.width = w; c.height = h;
+                        c.getContext('2d').drawImage(img, 0, 0, w, h);
+                        setImage(c.toDataURL('image/jpeg', 0.8));
+                    }
+                };
+                reader.readAsDataURL(file);
+                get('file-input').value = '';
+            }
+
+            function setImage(data) {
+                imgBase64 = data;
+                get('img-preview').src = data;
+                get('preview-area').classList.remove('hidden');
+            }
+
+            function clearImage() {
+                imgBase64 = null;
+                get('preview-area').classList.add('hidden');
+            }
+
+            async function runAI(autoSend) {
+                const key = get('s-api-key').value;
+                if(!key) return alert('APIキーを設定してください');
+                
+                const text = get('ai-text').value;
+                if(!text && !imgBase64) return alert('入力が必要です');
+
+                get('ai-msg').innerHTML = '<div class="spinner inline-block align-middle mr-2"></div>解析中...';
+                get('btn-analyze').disabled = true;
+
+                try {
+                    const payload = {
+                        contents: [{ parts: [] }],
+                        generationConfig: { responseMimeType: "application/json" }
+                    };
+                    
+                    const prompt = `あなたは家計簿入力アシスタントです。入力データから以下のJSONを抽出してください: {"amount":数値, "category":"食費/日用品/衣服・美容費/娯楽・交際費/交通費/通信費/医療費/その他", "payment":"現金/paypay/モバイルSuica/olive/三井住友ゴールドカード/楽天カード/viewカード/その他", "date":"YYYY-MM-DD", "memo":文字列}`;
+                    
+                    payload.contents[0].parts.push({ text: prompt });
+                    if(text) payload.contents[0].parts.push({ text: "Input: " + text });
+                    if(imgBase64) payload.contents[0].parts.push({ inlineData: { mimeType: "image/jpeg", data: imgBase64.split(',')[1] } });
+
+                    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${key}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const json = await res.json();
+                    if(json.error) throw new Error(json.error.message);
+                    const result = JSON.parse(json.candidates[0].content.parts[0].text);
+                    
+                    if(result.amount) get('inp-amount').value = result.amount;
+                    if(result.date) get('inp-date').value = result.date;
+                    if(result.memo) get('inp-memo').value = result.memo;
+                    if(result.category) {
+                        const el = document.querySelector(`input[name="cat"][value="${result.category}"]`);
+                        if(el) el.checked = true;
+                    }
+                    if(result.payment) {
+                        const el = document.querySelector(`input[name="pay"][value="${result.payment}"]`);
+                        if(el) el.checked = true;
+                    }
+
+                    get('ai-modal').classList.add('hidden');
+                    get('ai-text').value = '';
+                    clearImage();
+
+                    if(autoSend) sendForm();
+                    else alert('完了しました');
+
+                } catch(e) {
+                    alert('AIエラー: ' + e.message);
+                } finally {
+                    get('ai-msg').textContent = '';
+                    get('btn-analyze').disabled = false;
+                }
+            }
+
+            function sendForm() {
+                const amt = get('inp-amount').value;
+                if(!amt) return alert('金額を入力してください');
+                
+                const cat = document.querySelector('input[name="cat"]:checked')?.value || 'その他';
+                const pay = document.querySelector('input[name="pay"]:checked')?.value || '現金';
+                const date = get('inp-date').value;
+                const memo = get('inp-memo').value;
+
+                const url = get('s-url').value;
+                const params = new URLSearchParams();
+                params.append(get('s-amt').value, amt);
+                params.append(get('s-cat').value, cat);
+                params.append(get('s-pay').value, pay);
+                params.append(get('s-date').value, date);
+                if(memo) params.append(get('s-memo').value, memo);
+
+                let finalUrl = url;
+                if(!finalUrl.includes('?')) finalUrl += '?';
+                else finalUrl += '&';
+                
+                window.open(`${finalUrl}usp=pp_url&${params.toString()}`, '_blank');
+                get('inp-amount').value = '';
+                get('inp-memo').value = '';
+            }
+        });
+    </script>
+</body>
+</html>
